@@ -288,7 +288,7 @@ function getNormalizedText(text) {
     let recentlyNormalizedText = null;
 
     document.getElementById('practice-reception').addEventListener('click', () => {
-        // document.getElementById('answer').style.visibility = 'hidden';
+        document.getElementById('answer').style.visibility = 'hidden';
         let word, sentenceIndex;
         if (wordNum === 1) {
             word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
