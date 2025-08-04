@@ -477,6 +477,7 @@ canvas.addEventListener('touchstart', e => {
     const pos = getPos(e.touches[0]);
     lastX = pos.x;
     lastY = pos.y;
+    document.body.append('touchstart');
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
@@ -489,6 +490,7 @@ canvas.addEventListener('touchmove', e => {
     ctx.stroke();
     lastX = pos.x;
     lastY = pos.y;
+    document.body.append('touchmove');
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
