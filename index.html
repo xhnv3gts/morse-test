@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>モールス練習</title>
+    <style>
+        html { font: 20px/1.5 "Microsoft JhengHei"; }
+        input,select,button { font-size: 1em; font-family: inherit; }
+        body { width: 1200px; margin: auto; background-color: rgb(31 31 31); color: rgb(232 232 232); }
+        header { display: flex; justify-content: flex-end; column-gap: 15px; margin-block: 10px; padding: 5px; background-color: rgb(77 81 86); font-size: 0.9rem; }
+        main { margin-inline: 1rem; }
+        #example-text { width: 30em; }
+        #output { margin-block: 10px; font-size: 1.5em; }
+        #practice-reception { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>変換モード：<select id="convert-mode"></select></div>
+        <div>音量：<input id="volume" type="range"></div>
+    </header>
+    <main>
+        お手本を聴く：<input id="example-text"> <button id="play-example">再生</button>
+        <div id="output"></div>
+        <button id="clear-output">クリア [Delete]</button>
+        <hr>
+        <button id="practice-reception">受信練習 [↓]</button> <button id="listen-again">もう一度聞く [→]</button><br>
+        <button id="show-answer"><s>単語表示 [V]</s></button> <span id="answer"></span>
+    </main>
+    <script src="./index.js"></script>
+</body>
+</html>
