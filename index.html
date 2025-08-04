@@ -12,6 +12,9 @@
         #example-text { width: 30em; }
         #output { margin-block: 10px; font-size: 1.5em; }
         #practice-reception { margin-bottom: 5px; }
+        #show-answer { margin-bottom: 5px; }
+        #canvas-wrapper { width: 100%; height: 500px; margin-top: 10px; background-color: white; }
+        #canvas { width: 100%; height: 100%; touch-action: none; }
     </style>
 </head>
 <body>
@@ -25,7 +28,9 @@
         <button id="clear-output">クリア [Delete]</button>
         <hr>
         <button id="practice-reception">受信練習 [↓]</button> <button id="listen-again">もう一度聞く [→]</button><br>
-        <button id="show-answer"><s>単語表示 [V]</s></button> <span id="answer"></span>
+        <button id="show-answer"><s>単語表示 [V]</s></button> <span id="answer"></span><br>
+        <button id="clear-canvas">キャンバスクリア</button>
+        <div id="canvas-wrapper"><canvas id="canvas"></canvas></div>
     </main>
     <script src="./index.js"></script>
 </body>
