@@ -383,69 +383,6 @@ document.getElementById('convert-mode').dispatchEvent(new Event('change'));
 document.getElementById('volume').dispatchEvent(new Event('input'));
 
 //キャンバス
-// const canvas = document.getElementById('canvas');
-// const ctx = canvas.getContext('2d');
-
-// // サイズ調整（CSSによる表示サイズに合わせる）
-// function resizeCanvas() {
-//     canvas.width = canvas.offsetWidth;
-//     canvas.height = canvas.offsetHeight;
-
-//     // 白背景を描く（描画内容に含めたい場合）
-//     ctx.fillStyle = 'white';
-//     ctx.fillRect(0, 0, canvas.width, canvas.height);
-// }
-// resizeCanvas();
-// window.addEventListener('resize', resizeCanvas);
-
-// // 線設定
-// ctx.lineCap = 'round';
-// ctx.lineWidth = 4;
-// ctx.strokeStyle = 'black';
-
-// let drawing = false;
-// let lastX = 0;
-// let lastY = 0;
-
-// function getCanvasTouchPos(touch) {
-//     const rect = canvas.getBoundingClientRect();
-//     return {
-//         x: touch.clientX - rect.left,
-//         y: touch.clientY - rect.top
-//     };
-// }
-
-// canvas.addEventListener('touchstart', (e) => {
-//     e.preventDefault();
-//     const touch = e.touches[0];
-//     const pos = getCanvasTouchPos(touch);
-//     lastX = pos.x;
-//     lastY = pos.y;
-//     drawing = true;
-// }, { passive: false });
-
-// canvas.addEventListener('touchmove', (e) => {
-//     if (!drawing) return;
-//     e.preventDefault();
-//     const touch = e.touches[0];
-//     const pos = getCanvasTouchPos(touch);
-
-//     ctx.beginPath();
-//     ctx.moveTo(lastX, lastY);
-//     ctx.lineTo(pos.x, pos.y);
-//     ctx.stroke();
-
-//     lastX = pos.x;
-//     lastY = pos.y;
-// }, { passive: false });
-
-// canvas.addEventListener('touchend', () => {
-//     drawing = false;
-// });
-// canvas.addEventListener('touchcancel', () => {
-//     drawing = false;
-// });
-
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -477,7 +414,6 @@ canvas.addEventListener('touchstart', e => {
     const pos = getPos(e.touches[0]);
     lastX = pos.x;
     lastY = pos.y;
-    document.body.append('touchstart');
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
@@ -490,7 +426,6 @@ canvas.addEventListener('touchmove', e => {
     ctx.stroke();
     lastX = pos.x;
     lastY = pos.y;
-    document.body.append('touchmove');
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
