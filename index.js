@@ -292,7 +292,7 @@ function getNormalizedText(text) {
         let word, sentenceIndex;
         if (wordNum === 1) {
             word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
-            sentenceIndex = '---- ';
+            sentenceIndex = '(なし) ';
         } else {
             sentenceIndex = getRandomInt(0, sentences.length - 1);
             const sentence = sentences[sentenceIndex];
