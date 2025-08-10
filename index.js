@@ -439,3 +439,20 @@ document.getElementById('clear-canvas').addEventListener('click', () => {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 });
+
+//fetch
+async function getData() {
+    try {
+        const response = await fetch('./data/test.json');
+        if (!response.ok) {
+            throw new Error('HTTPエラー: ' + response.status);
+        }
+        const data = await response.json();
+        console.log(data);
+        return data;
+    } catch (error) {
+        return null;
+    }
+}
+
+getData();
