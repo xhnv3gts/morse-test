@@ -292,12 +292,8 @@ function getNormalizedText(text) {
         let word, sentenceIndex;
         if (wordNum === 1) {
             // word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
-            console.log('aa');
             words ??= await getWords();
-            console.log('bb');
-            console.log(words[0]);
-            word = sliceArrayRandomly(words);
-            console.log(word);
+            [word] = sliceArrayRandomly(words);
             sentenceIndex = '(なし) ';
         } else {
             sentenceIndex = getRandomInt(0, sentences.length - 1);
