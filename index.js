@@ -463,7 +463,7 @@ async function getWords() {
             throw new Error('HTTPエラー: ' + response.status);
         }
         const data = await response.json();
-        // console.log(data);
+        console.log(data);
         return data;
     } catch (error) {
         return null;
