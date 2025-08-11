@@ -287,11 +287,15 @@ function getNormalizedText(text) {
 
     let recentlyNormalizedText = null;
 
-    document.getElementById('practice-reception').addEventListener('click', () => {
+    let words = null;
+
+    document.getElementById('practice-reception').addEventListener('click', async () => {
         document.getElementById('answer').style.visibility = 'hidden';
         let word, sentenceIndex;
         if (wordNum === 1) {
-            word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
+            // word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
+            words ??= await getWords();
+            word = sliceArrayRandomly(words);
             sentenceIndex = '(なし) ';
         } else {
             sentenceIndex = getRandomInt(0, sentences.length - 1);
@@ -454,5 +458,121 @@ async function getData() {
         return null;
     }
 }
+async function getWords() {
+    try {
+        const response = await fetch('./data/words.json');
+        if (!response.ok) {
+            throw new Error('HTTPエラー: ' + response.status);
+        }
+        const data = await response.json();
+        // console.log(data);
+        return data;
+    } catch (error) {
+        return null;
+    }
+}
 
-getData();
+// getData();
+
+const bookFileNames = ['1_Genesis.json', '2_Exodus.json'];
+
+function getRandomItem(array) {
+
+}
+
+
+async function getBook() {
+    const fileName = getRandomItem(bookFileNames);
+    const book = await getData(fileName);
+    return book;
+}
+
+function getRandomChapter(book) {
+    return getRandomItem(book);
+}
+
+function getRandomVerse(chapter) {
+return getRandomItem(chapter);
+}
+
+
+function sliceArrayRandomly(array, range = 1) {
+    if (range <= 0) { return null; }
+    if (range >= array.length) { return array; }
+    const start = Math.floor(Math.random() * (array.length - range + 1));
+    return array.slice(start, start + range);
+}
+
+const kjvBookNames = [
+    "Genesis",
+    "Exodus",
+    "Leviticus",
+    "Numbers",
+    "Deuteronomy",
+    "Joshua",
+    "Judges",
+    "Ruth",
+    "1 Samuel",
+    "2 Samuel",
+    "1 Kings",
+    "2 Kings",
+    "1 Chronicles",
+    "2 Chronicles",
+    "Ezra",
+    "Nehemiah",
+    "Esther",
+    "Job",
+    "Psalms",
+    "Proverbs",
+    "Ecclesiastes",
+    "Song of Solomon",
+    "Isaiah",
+    "Jeremiah",
+    "Lamentations",
+    "Ezekiel",
+    "Daniel",
+    "Hosea",
+    "Joel",
+    "Amos",
+    "Obadiah",
+    "Jonah",
+    "Micah",
+    "Nahum",
+    "Habakkuk",
+    "Zephaniah",
+    "Haggai",
+    "Zechariah",
+    "Malachi",
+    "Matthew",
+    "Mark",
+    "Luke",
+    "John",
+    "Acts",
+    "Romans",
+    "1 Corinthians",
+    "2 Corinthians",
+    "Galatians",
+    "Ephesians",
+    "Philippians",
+    "Colossians",
+    "1 Thessalonians",
+    "2 Thessalonians",
+    "1 Timothy",
+    "2 Timothy",
+    "Titus",
+    "Philemon",
+    "Hebrews",
+    "James",
+    "1 Peter",
+    "2 Peter",
+    "1 John",
+    "2 John",
+    "3 John",
+    "Jude",
+    "Revelation"
+];
+
+function xxxx(serialNo, bookName) {
+    return `${serialNo}_${bookName.replaceAll(' ', '-')}.json`;
+}
+
