@@ -221,6 +221,155 @@ function wait(duration) {
     return new Promise(resolve => setTimeout(resolve, duration));
 }
 
+class Player {
+    #isPlaying = false;
+    set(morseCode) {
+
+    }
+    play() {
+        this.#isPlaying = true;
+        const signal = signals[wordIndex][letterIndex][signalIndex];
+        const word = signals[wordIndex];
+        if (word) {
+            const letter = word[letterIndex];
+            if (letter) {
+                const signal = letter[signalIndex];
+                if (signal) {
+                    playBeep(signal);
+                    wait(signalGap);
+                }
+            } else {
+                wait(letterGap);
+                play();
+            }
+        }
+
+        words.slice(wordIndex).forEach((word, wordIndex) => {
+
+        });
+
+        signalIndex++;
+        gap = signalGap;
+        if (signalIndex === signals.length) {
+            signalIndex = 0;
+            letterIndex++;
+            gap = letterGap;
+            if (letterIndex === letters.length) {
+                letterIndex = 0;
+                wordIndex++;
+                gap = wordGap;
+                if (wordIndex === words.length) {
+                    // break;
+                }
+            }
+        }
+
+        const words = ['apple', 'banana'];
+        let wordIndex = 0, letterIndex = 0, signalIndex = 0;
+
+        for (; wordIndex < words.length; wordIndex++) {
+            const letters = words[wordIndex];
+            for (; letterIndex < letters.length; letterIndex++) {
+                const signals = letters[j];
+                for (; signalIndex < signals.length; signalIndex++) {
+                    if (gap) { wait(gap); }
+                    const signal = signals[j];
+                    playBeep(signal);
+                    gap = signalGap;
+                }
+                gap = letterGap;
+            }
+            gap = wordGap;
+        }
+
+        const signal2 = signals[wordIndex][letterIndex][++signalIndex] ?? signals[wordIndex][++letterIndex][signalIndex = 0] ?? signals[++wordIndex][letterIndex = 0][signalIndex = 0];
+    }
+}
+
+// class Player {
+//     #wordIndex = 0;
+//     #letterIndex = 0;
+//     #signalIndex = 0;
+//     #words = [];
+//     set(text) {
+//         this.#words = text;
+//     }
+//     async play(text) {
+//         let gap = null;
+
+//         const signal = signals[this.#wordIndex][this.#letterIndex][this.#signalIndex];
+
+//         for (; this.#wordIndex < this.#words.length; this.#wordIndex++) {
+//             const letters = this.#words[this.#wordIndex];
+//             for (; this.#letterIndex < letters.length; this.#letterIndex++) {
+//                 const signals = letters[this.#letterIndex];
+//                 for (; this.#signalIndex < signals.length; this.#signalIndex++) {
+//                     if (gap) { wait(gap); }
+//                     const signal = signals[this.#signalIndex];
+//                     playBeep(signal);
+//                     gap = signalGap;
+//                 }
+//                 gap = letterGap;
+//             }
+//             gap = wordGap;
+//         }
+//     }
+//     pause() {
+
+//     }
+//     stop() {
+//         this.#wordIndex = this.#letterIndex = this.#signalIndex = 0;
+//     }
+
+//     #processStep() {
+//         if (paused) return;
+
+//         if (wordIndex >= words.length) {
+//             console.log("終了");
+//             return;
+//         }
+
+//         const letters = words[wordIndex];
+//         const signals = letters[letterIndex];
+
+//         if (signalIndex < signals.length) {
+//             // 信号処理
+//             playBeep(signals[signalIndex]);
+//             signalIndex++;
+//             wait(signalGap);
+
+//         } else {
+//             // 信号が終わった → 次の文字へ
+//             signalIndex = 0;
+//             letterIndex++;
+//             if (letterIndex < letters.length) {
+//                 wait(letterGap);
+//             } else {
+//                 // 文字が終わった → 次の単語へ
+//                 letterIndex = 0;
+//                 wordIndex++;
+//                 if (wordIndex < words.length) {
+//                     wait(wordGap);
+//                 }
+//             }
+//         }
+
+//         // 次のステップをスケジュール
+//         setTimeout(processStep, 0);
+//     }
+// }
+
+{
+    const words = [];
+    const letters = [];
+    let wordIndex = 0;
+    let letterIndex = 0;
+    async function play(sentence) {
+
+    }
+}
+
+
 function getNormalizedText(text) {
     return text
         .toLowerCase()
@@ -239,7 +388,7 @@ function getNormalizedText(text) {
 
 {
     const useSymbol = false; //記号を含めるか
-    const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
+    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
 
     const dotDuration = 100;
     const dashDuration = dotDuration * 3;
@@ -247,68 +396,57 @@ function getNormalizedText(text) {
     const letterGap = dotDuration * 3;
     const wordGap = dotDuration * 7;
 
-    const sentences = [];
-    (() => { //折り畳み用ブロック
-        //１章
-        sentences[0] = 'In the beginning God created the heaven and the earth.';
-        sentences[1] = 'And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters.';
-        sentences[2] = 'And God said, Let there be light: and there was light.';
-        sentences[3] = 'And God saw the light, that it was good: and God divided the light from the darkness.';
-        sentences[4] = 'And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.';
-        sentences[5] = 'And God said, Let there be a firmament in the midst of the waters, and let it divide the waters from the waters.';
-        sentences[6] = 'And God made the firmament, and divided the waters which were under the firmament from the waters which were above the firmament: and it was so.';
-        sentences[7] = 'And God called the firmament Heaven. And the evening and the morning were the second day.';
-        sentences[8] = 'And God said, Let the waters under the heaven be gathered together unto one place, and let the dry land appear: and it was so.';
-        sentences[9] = 'And God called the dry land Earth; and the gathering together of the waters called he Seas: and God saw that it was good.';
-        sentences[10] = 'And God said, Let the earth bring forth grass, the herb yielding seed, and the fruit tree yielding fruit after his kind, whose seed is in itself, upon the earth: and it was so.';
-        sentences[11] = 'And the earth brought forth grass, and herb yielding seed after his kind, and the tree yielding fruit, whose seed was in itself, after his kind: and God saw that it was good.';
-        sentences[12] = 'And the evening and the morning were the third day.';
-        sentences[13] = 'And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years: 1:15 And let them be for lights in the firmament of the heaven to give light upon the earth: and it was so.';
-        sentences[14] = 'And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.';
-        sentences[15] = 'And God set them in the firmament of the heaven to give light upon the earth, 1:18 And to rule over the day and over the night, and to divide the light from the darkness: and God saw that it was good.';
-        sentences[16] = 'And the evening and the morning were the fourth day.';
-        sentences[17] = 'And God said, Let the waters bring forth abundantly the moving creature that hath life, and fowl that may fly above the earth in the open firmament of heaven.';
-        sentences[18] = 'And God created great whales, and every living creature that moveth, which the waters brought forth abundantly, after their kind, and every winged fowl after his kind: and God saw that it was good.';
-        sentences[19] = 'And God blessed them, saying, Be fruitful, and multiply, and fill the waters in the seas, and let fowl multiply in the earth.';
-        sentences[20] = 'And the evening and the morning were the fifth day.';
-        sentences[21] = 'And God said, Let the earth bring forth the living creature after his kind, cattle, and creeping thing, and beast of the earth after his kind: and it was so.';
-        sentences[22] = 'And God made the beast of the earth after his kind, and cattle after their kind, and every thing that creepeth upon the earth after his kind: and God saw that it was good.';
-        sentences[23] = 'And God said, Let us make man in our image, after our likeness: and let them have dominion over the fish of the sea, and over the fowl of the air, and over the cattle, and over all the earth, and over every creeping thing that creepeth upon the earth.';
-        sentences[24] = 'So God created man in his own image, in the image of God created he him; male and female created he them.';
-        sentences[25] = 'And God blessed them, and God said unto them, Be fruitful, and multiply, and replenish the earth, and subdue it: and have dominion over the fish of the sea, and over the fowl of the air, and over every living thing that moveth upon the earth.';
-        sentences[26] = 'And God said, Behold, I have given you every herb bearing seed, which is upon the face of all the earth, and every tree, in the which is the fruit of a tree yielding seed; to you it shall be for meat.';
-        sentences[27] = 'And to every beast of the earth, and to every fowl of the air, and to every thing that creepeth upon the earth, wherein there is life, I have given every green herb for meat: and it was so.';
-        sentences[28] = 'And God saw every thing that he had made, and, behold, it was very good. And the evening and the morning were the sixth day.';
-        //２章
-    })();
-    const noDuplicateWords = Array.from(new Set(sentences.join(' ').replaceAll(/[,.:;]/g, '').toLowerCase().split(' ')));
-
     let recentlyNormalizedText = null;
 
     let words = null;
+    const bookNames = [
+        'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+        'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+        '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
+        'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+        'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
+        'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+        'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
+        'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
+        'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+        'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
+        'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy',
+        '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
+        '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+        'Jude', 'Revelation'
+    ];
+
 
     document.getElementById('practice-reception').addEventListener('click', async () => {
         document.getElementById('answer').style.visibility = 'hidden';
         let word, sentenceIndex;
         if (wordNum === 1) {
-            // word = noDuplicateWords[getRandomInt(0, noDuplicateWords.length - 1)];
             words ??= await getWords();
             [word] = sliceArrayRandomly(words);
             sentenceIndex = '(なし) ';
         } else {
-            sentenceIndex = getRandomInt(0, sentences.length - 1);
-            const sentence = sentences[sentenceIndex];
-            const words = sentence.split(' ');
-            const limitedWordNum = wordNum > words.length ? words.length : wordNum;
-            const wordIndexStart = getRandomInt(0, words.length - limitedWordNum);
-            const wordIndexEnd = wordIndexStart + limitedWordNum;
-            const wordTmp = words.slice(wordIndexStart, wordIndexEnd).join(' ');
-            word = useSymbol ? wordTmp : wordTmp.replaceAll(/[,.:;]/g, '');
+            const [[bookName], bookIndex] = sliceArrayRandomlyWithIndex(bookNames);
+            // const nameToSerial = { 'Genesis': 1, 'Exodus': 2, '1 Chronicles': 13, 'Sonf of Solomon': 22 };
+            const serial = bookIndex + 1;// nameToSerial[bookName];
+            const filepath = xxxx(serial, bookName);
+            const book = await getBook(filepath);
+            const [[chapter], chapterIndex] = sliceArrayRandomlyWithIndex(book);
+            const [[verse], verseIndex] = sliceArrayRandomlyWithIndex(chapter);
+
+            // const sentence = sentences[sentenceIndex];
+            const words = verse.split(' ');
+            // const limitedWordNum = wordNum > words.length ? words.length : wordNum;
+            // const wordIndexStart = getRandomInt(0, words.length - limitedWordNum);
+            // const wordIndexEnd = wordIndexStart + limitedWordNum;
+            // const wordTmp = words.slice(wordIndexStart, wordIndexEnd).join(' ');
+            // word = useSymbol ? wordTmp : wordTmp.replaceAll(/[,.:;]/g, '');
+            word = sliceArrayRandomly(words, wordNum).join(' ');
+            sentenceIndex = `${bookName} ${chapterIndex + 1}:${verseIndex + 1}`;
         }
 
         const normalizedText = getNormalizedText(word);
         recentlyNormalizedText = normalizedText;
-        document.getElementById('answer').textContent = `${sentenceIndex}: ${normalizedText}`;
+        document.getElementById('answer').textContent = `${normalizedText} (${sentenceIndex})`;
         const characters = [...normalizedText];
         play();
 
@@ -468,6 +606,19 @@ async function getWords() {
         return null;
     }
 }
+async function getBook(path) {
+    try {
+        const response = await fetch(`./data/book/${path}`);
+        if (!response.ok) {
+            throw new Error('HTTPエラー: ' + response.status);
+        }
+        const data = await response.json();
+        // console.log(data);
+        return data;
+    } catch (error) {
+        return null;
+    }
+}
 
 // getData();
 
@@ -478,11 +629,11 @@ function getRandomItem(array) {
 }
 
 
-async function getBook() {
-    const fileName = getRandomItem(bookFileNames);
-    const book = await getData(fileName);
-    return book;
-}
+// async function getBook() {
+//     const fileName = getRandomItem(bookFileNames);
+//     const book = await getData(fileName);
+//     return book;
+// }
 
 function getRandomChapter(book) {
     return getRandomItem(book);
@@ -500,6 +651,12 @@ function sliceArrayRandomly(array, range = 1) {
     return array.slice(start, start + range);
 }
 
+function sliceArrayRandomlyWithIndex(array, range = 1) {
+    if (range <= 0) { return null; }
+    if (range >= array.length) { return array; }
+    const start = Math.floor(Math.random() * (array.length - range + 1));
+    return [array.slice(start, start + range), start];
+}
 const kjvBookNames = [
     "Genesis",
     "Exodus",
@@ -570,6 +727,6 @@ const kjvBookNames = [
 ];
 
 function xxxx(serialNo, bookName) {
-    return `${serialNo}_${bookName.replaceAll(' ', '-')}.json`;
+    return `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
 }
 
