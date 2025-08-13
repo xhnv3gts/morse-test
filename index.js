@@ -399,11 +399,7 @@ function getNormalizedText(text) {
     let recentlyNormalizedText = null;
 
     let words = null;
-    let bookNames;
-    (async () => {
-        bookNames = await getData('./data/book-names.json');
-    })();
-
+    const bookNames = await getData('./data/book-names.json');
 
     document.getElementById('practice-reception').addEventListener('click', async () => {
         document.getElementById('answer').style.visibility = 'hidden';
@@ -627,6 +623,10 @@ function getRandomVerse(chapter) {
 return getRandomItem(chapter);
 }
 
+function getRandomElementWithIndex(array) {
+    const index = Math.floor(Math.random() * array.length);
+    return [array[index], index];
+}
 
 function sliceArrayRandomly(array, range = 1) {
     if (range <= 0) { return null; }
