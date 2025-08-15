@@ -386,9 +386,55 @@ function getNormalizedText(text) {
     }
 }
 
+let words;
+async function getRandomWord() {
+    words ??= await getData('./data/words.json');
+    return getRandomItem(words);
+}
+
+let bookNames;
+let bookCache = {};
+async function getBook(bookName) {
+    bookNames ??= await getData('./data/book-names.json');
+    bookName ??= getRandomItem(bookNames);
+    const book = await (async () => {
+        if (Object.hasOwn(bookCache, bookName)) {
+            return bookCache[bookName];
+        } else {
+            const serialNo = bookNames.indexOf(bookName) + 1;
+            const fileName = `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
+            const book = await getData(`./data/book/${fileName}`);
+            bookCache[bookName] = book;
+            return book;
+        }
+    })();
+    const reference = { bookName };
+    return [book, reference];
+}
+async function getChapter(bookName, chapterNo) {
+    const [bookAsChapters, reference] = await getBook(bookName);
+    chapterNo ??= getRandomIndex(bookAsChapters) + 1;
+    const chapter = bookAsChapters[chapterNo - 1];
+    reference.chapterNo = chapterNo;
+    return [chapter, reference];
+}
+async function getVerse(bookName, chapterNo, verseNo) {
+    const [chapterAsVerses, reference] = await getChapter(bookName, chapterNo);
+    verseNo ??= getRandomIndex(chapterAsVerses) + 1;
+    const verse = chapterAsVerses[verseNo - 1];
+    reference.verseNo = verseNo;
+    return [verse, reference];
+}
+async function getText(wordCount, bookName, chapterNo, verseNo) {
+    const [verse, reference] = await getVerse(bookName, chapterNo, verseNo);
+    const words = verse.split(' ');
+    const text = getRandomSubarray(words, wordCount).join(' ');
+    return [text, reference];
+}
+
 {
     const useSymbol = false; //記号を含めるか
-    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+    const wordNum = 3; //単語数(１のときは重複を除外した配列を使う)
 
     const dotDuration = 100;
     const dashDuration = dotDuration * 3;
@@ -396,40 +442,29 @@ function getNormalizedText(text) {
     const letterGap = dotDuration * 3;
     const wordGap = dotDuration * 7;
 
-    let recentlyNormalizedText = null;
+    let normalizedText;
 
-    let words = null;
-    const bookNames = await getData('./data/book-names.json');
+    function createReferenceText(reference) {
+        const { bookName, chapterNo, verseNo } = reference;
+        let referenceText = bookName;
+        if (chapterNo) { referenceText += ` ${chapterNo}`; }
+        if (verseNo) { referenceText += `:${verseNo}`; }
+        return referenceText;
+    }
 
     document.getElementById('practice-reception').addEventListener('click', async () => {
         document.getElementById('answer').style.visibility = 'hidden';
-        let word, sentenceIndex;
+
         if (wordNum === 1) {
-            words ??= await getWords();
-            [word] = sliceArrayRandomly(words);
-            sentenceIndex = '(なし) ';
+            const word = await getRandomWord();
+            normalizedText = getNormalizedText(word);
+            document.getElementById('answer').textContent = normalizedText;
         } else {
-            const [[bookName], bookIndex] = sliceArrayRandomlyWithIndex(bookNames);
-            const serial = bookIndex + 1;
-            const filepath = xxxx(serial, bookName);
-            const book = await getBook(filepath);
-            const [[chapter], chapterIndex] = sliceArrayRandomlyWithIndex(book);
-            const [[verse], verseIndex] = sliceArrayRandomlyWithIndex(chapter);
-
-            // const sentence = sentences[sentenceIndex];
-            const words = verse.split(' ');
-            // const limitedWordNum = wordNum > words.length ? words.length : wordNum;
-            // const wordIndexStart = getRandomInt(0, words.length - limitedWordNum);
-            // const wordIndexEnd = wordIndexStart + limitedWordNum;
-            // const wordTmp = words.slice(wordIndexStart, wordIndexEnd).join(' ');
-            // word = useSymbol ? wordTmp : wordTmp.replaceAll(/[,.:;]/g, '');
-            word = sliceArrayRandomly(words, wordNum).join(' ');
-            sentenceIndex = `${bookName} ${chapterIndex + 1}:${verseIndex + 1}`;
+            const [text, reference] = await getText(wordNum);
+            normalizedText = getNormalizedText(text);
+            const referenceText = createReferenceText(reference);
+            document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
         }
-
-        const normalizedText = getNormalizedText(word);
-        recentlyNormalizedText = normalizedText;
-        document.getElementById('answer').textContent = `${normalizedText} (${sentenceIndex})`;
         const characters = [...normalizedText];
         play();
 
@@ -454,8 +489,9 @@ function getNormalizedText(text) {
     });
 
     document.getElementById('listen-again').addEventListener('click', () => {
-        if (!recentlyNormalizedText) { return; }
-        const normalizedText = recentlyNormalizedText;
+        // if (!recentlyNormalizedText) { return; }
+        // const normalizedText = recentlyNormalizedText;
+        if (!normalizedText) { return; }
         const characters = [...normalizedText];
         play();
 
@@ -482,12 +518,6 @@ function getNormalizedText(text) {
     document.getElementById('show-answer').addEventListener('click', () => {
         document.getElementById('answer').style.visibility = 'visible';
     });
-
-
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
 }
 
 //イベントリスナー追加------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -563,86 +593,29 @@ document.getElementById('clear-canvas').addEventListener('click', () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 });
 
-//fetch
-async function getData(path) {
+async function getData(url) {
     try {
-        const response = await fetch(path);
-        if (!response.ok) {
-            throw new Error('HTTPエラー: ' + response.status);
-        }
+        const response = await fetch(url);
+        if (!response.ok) { throw new Error(`Response status: ${response.status}`); }
         const data = await response.json();
         return data;
     } catch (error) {
-        return null;
-    }
-}
-async function getWords() {
-    try {
-        const response = await fetch('./data/words.json');
-        if (!response.ok) {
-            throw new Error('HTTPエラー: ' + response.status);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        return null;
-    }
-}
-async function getBook(path) {
-    try {
-        const response = await fetch(`./data/book/${path}`);
-        if (!response.ok) {
-            throw new Error('HTTPエラー: ' + response.status);
-        }
-        const data = await response.json();
-        // console.log(data);
-        return data;
-    } catch (error) {
+        console.error(error.message);
         return null;
     }
 }
 
-const bookFileNames = ['1_Genesis.json', '2_Exodus.json'];
-
+function getRandomIndex(array) {
+    return Math.floor(Math.random() * array.length);
+}
 function getRandomItem(array) {
-
+    const index = getRandomIndex(array);
+    return array[index];
 }
-
-
-// async function getBook() {
-//     const fileName = getRandomItem(bookFileNames);
-//     const book = await getData(fileName);
-//     return book;
-// }
-
-function getRandomChapter(book) {
-    return getRandomItem(book);
-}
-
-function getRandomVerse(chapter) {
-return getRandomItem(chapter);
-}
-
-function getRandomElementWithIndex(array) {
-    const index = Math.floor(Math.random() * array.length);
-    return [array[index], index];
-}
-
-function sliceArrayRandomly(array, range = 1) {
+function getRandomSubarray(array, range) {
     if (range <= 0) { return null; }
     if (range >= array.length) { return array; }
     const start = Math.floor(Math.random() * (array.length - range + 1));
-    return array.slice(start, start + range);
+    const end = start + range;
+    return array.slice(start, end);
 }
-
-function sliceArrayRandomlyWithIndex(array, range = 1) {
-    if (range <= 0) { return null; }
-    if (range >= array.length) { return array; }
-    const start = Math.floor(Math.random() * (array.length - range + 1));
-    return [array.slice(start, start + range), start];
-}
-
-function xxxx(serialNo, bookName) {
-    return `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
-}
-
