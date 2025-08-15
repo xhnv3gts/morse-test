@@ -434,7 +434,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
 
 {
     const useSymbol = false; //記号を含めるか
-    const wordNum = 3; //単語数(１のときは重複を除外した配列を使う)
+    const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
     const dotDuration = 100;
     const dashDuration = dotDuration * 3;
