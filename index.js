@@ -340,10 +340,13 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
             if (signals) {
                 for (const signal of signals) {
                     const duration = signal === '.' ? dotDuration : dashDuration;
+                    document.getElementById('log').append('[p]');
                     try {
-                        document.getElementById('log').append('[b]');
+                        document.getElementById('log').append('[try1]');
                         await Beep.play(duration);
+                        document.getElementById('log').append('[try2]');
                     } catch(error) {
+                        document.getElementById('log').append('[catch]');
                         document.getElementById('log').append(error.message);
                     }
                     await wait(signalGap);
