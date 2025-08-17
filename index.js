@@ -79,7 +79,7 @@ class Beep {
     // }
     static async play(duration) {
         if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
-        document.body.append(this.#audioCtx.state + ',');
+        document.getElementById('log').append(this.#audioCtx.state[0]);
         if (this.#audioCtx.state === "suspended") { await this.#audioCtx.resume(); }
         return new Promise(resolve => {
             const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
@@ -339,7 +339,11 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
             if (signals) {
                 for (const signal of signals) {
                     const duration = signal === '.' ? dotDuration : dashDuration;
-                    await Beep.play(duration);
+                    try {
+                        await Beep.play(duration);
+                    } catch(error) {
+                        document.getElementById('log').append(error.message);
+                    }
                     await wait(signalGap);
                 }
                 if (characters[index + 1]) {
