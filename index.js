@@ -66,9 +66,21 @@ class Beep {
     static #audioCtx;
     static #frequency = 770;
     static #gain;
-    static play(duration) {
+    // static play(duration) {
+    //     return new Promise(resolve => {
+    //         if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
+    //         const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
+    //         oscillator.onended = () => resolve();
+    //         const gainNode = new GainNode(this.#audioCtx, { gain: this.#gain });
+    //         oscillator.connect(gainNode).connect(this.#audioCtx.destination);
+    //         oscillator.start();
+    //         oscillator.stop(this.#audioCtx.currentTime + duration / 1000);
+    //     });
+    // }
+    static async play(duration) {
+        if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
+        if (this.#audioCtx.state === "suspended") { await this.#audioCtx.resume(); }
         return new Promise(resolve => {
-            if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
             const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
             oscillator.onended = () => resolve();
             const gainNode = new GainNode(this.#audioCtx, { gain: this.#gain });
