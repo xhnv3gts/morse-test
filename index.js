@@ -79,6 +79,7 @@ class Beep {
     // }
     static async play(duration) {
         if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
+        document.body.append(this.#audioCtx.state + ',');
         if (this.#audioCtx.state === "suspended") { await this.#audioCtx.resume(); }
         return new Promise(resolve => {
             const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
