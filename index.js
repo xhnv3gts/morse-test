@@ -329,6 +329,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
             const referenceText = createReferenceText(reference);
             document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
         }
+        normalizedText = 'a';
         const characters = [...normalizedText];
         play();
 
@@ -340,6 +341,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
                 for (const signal of signals) {
                     const duration = signal === '.' ? dotDuration : dashDuration;
                     try {
+                        document.getElementById('log').append('[b]');
                         await Beep.play(duration);
                     } catch(error) {
                         document.getElementById('log').append(error.message);
