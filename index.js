@@ -1,3 +1,6 @@
+import IambicKeyer from './js/IambicKeyer.js';
+import Beep from './js/Beep.js';
+
 //グローバル変数------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 const dotDuration = 50;
 const dashDuration = dotDuration * 3;
@@ -8,27 +11,6 @@ const wordGap = dotDuration * 7;
 const defaultConvertMode = 'EN_ONLY';
 
 //クラス------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-class Signal {
-    #signal;
-    #isDot;
-    #isDash;
-    constructor(signal) {
-        this.#signal = signal;
-        this.#isDot = signal === '.';
-        this.#isDash = signal === '-';
-    }
-    toString() {
-        return this.#signal;
-    }
-    get isDot() { return this.#isDot; }
-    get isDash() { return this.#isDash; }
-    get duration() { return this.#isDot ? dotDuration : dashDuration; }
-    get invertedSignal() { return new Signal({ '.': '-', '-': '.' }[this.#signal]); }
-    equals(signal) {
-        return this.toString() === signal.toString();
-    }
-}
-
 class Converter {
     static #MODE = { EN_FIRST: ['欧文優先', 'en', true], JA_FIRST: ['和文優先', 'ja', true], EN_ONLY: ['欧文のみ', 'en', false], JA_ONLY: ['和文のみ', 'ja', false] };
     static get MODE() { return this.#MODE; }
@@ -62,39 +44,6 @@ class Converter {
     }
 }
 
-class Beep {
-    static #audioCtx;
-    static #frequency = 770;
-    static #gain;
-    // static play(duration) {
-    //     return new Promise(resolve => {
-    //         if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
-    //         const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
-    //         oscillator.onended = () => resolve();
-    //         const gainNode = new GainNode(this.#audioCtx, { gain: this.#gain });
-    //         oscillator.connect(gainNode).connect(this.#audioCtx.destination);
-    //         oscillator.start();
-    //         oscillator.stop(this.#audioCtx.currentTime + duration / 1000);
-    //     });
-    // }
-    static async play(duration) {
-        if (!this.#audioCtx) { this.#audioCtx = new AudioContext(); }
-        document.getElementById('log').append(this.#audioCtx.state[0]);
-        if (this.#audioCtx.state === "suspended") { await this.#audioCtx.resume(); }
-        return new Promise(resolve => {
-            const oscillator = new OscillatorNode(this.#audioCtx, { type: 'sawtooth', frequency: this.#frequency });
-            oscillator.onended = () => resolve();
-            const gainNode = new GainNode(this.#audioCtx, { gain: this.#gain });
-            oscillator.connect(gainNode).connect(this.#audioCtx.destination);
-            oscillator.start();
-            oscillator.stop(this.#audioCtx.currentTime + duration / 1000);
-        });
-    }
-    static setVolume(volume) {
-        this.#gain = volume * 0.0006;
-    }
-}
-
 class SignalBuffer {
     static #signals = [];
     static get morseCode() { return this.#signals.join(''); }
@@ -106,50 +55,8 @@ class SignalBuffer {
     }
 }
 
-class Timer {
-    #handler;
-    #delay;
-    #params;
-    #timeoutId;
-    constructor(handler, delay) {
-        this.#handler = handler;
-        this.#delay = delay;
-        this.#params = [];
-    }
-    setParams(...params) {
-        this.#params = params;
-    }
-    start() {
-        this.#timeoutId = setTimeout(this.#handler, this.#delay, ...this.#params);
-    }
-    reset() {
-        clearTimeout(this.#timeoutId);
-        this.#params = [];
-        this.#timeoutId = null;
-    }
-}
-
-// class Processor {
-//     static initialize() {
-
-//     }
-// }
-let currentSignal = null;
-let interruptSignal = null;
-const isHolding = { '.': false, '-': false };
-
-const keyToSignal = {
-    'ArrowLeft': new Signal('.'),
-    'ArrowUp': new Signal('-')
-};
 window.addEventListener('keydown', e => {
     if (e.repeat) { return; }
-    const signal = keyToSignal[e.key];
-    if (signal) {
-        isHolding[signal] = true;
-        if (!currentSignal) { execute(signal); }
-        else if (!signal.equals(currentSignal)) { interruptSignal = signal; }
-    }
     switch (e.key) {
         case 'Delete': //todo
             if (document.activeElement !== document.getElementById('example-text')) {
@@ -170,39 +77,25 @@ window.addEventListener('keydown', e => {
             break;
     }
 });
-window.addEventListener('keyup', e => {
-    const signal = keyToSignal[e.key];
-    if (signal) { isHolding[signal] = false; }
-});
 
-const signalTimer = new Timer(() => {
-    const nextSignal = interruptSignal ? interruptSignal : isHolding[currentSignal] ? currentSignal : null;
-    currentSignal = null;
-    interruptSignal = null;
-    if (nextSignal) { execute(nextSignal); }
-}, signalGap);
-
-const letterTimer = new Timer(() => {
-    const character = Converter.toCharacter(SignalBuffer.morseCode) ?? '[?]';
-    document.getElementById('output').textContent += character.toUpperCase();
-    SignalBuffer.clear();
-}, letterGap);
-
-const wordTimer = new Timer(() => {
-    document.getElementById('output').textContent += ' ';
-}, wordGap);
-
-const timers = [signalTimer, letterTimer, wordTimer];
-
-async function execute(signal) {
-    currentSignal = signal;
-    const { invertedSignal } = signal;
-    if (isHolding[invertedSignal]) { interruptSignal = invertedSignal; }
-    timers.forEach(timer => timer.reset());
-    await Beep.play(signal.duration);
+IambicKeyer.initialize('ArrowLeft', 'ArrowUp', dotDuration);
+IambicKeyer.onsignalstart = signal => {
+    clearTimeout(timeoutId11);
+    clearTimeout(timeoutId22);
     SignalBuffer.append(signal);
-    timers.forEach(timer => timer.start());
-}
+};
+let timeoutId11, timeoutId22;
+IambicKeyer.onsignalend = () => {
+    timeoutId11 = setTimeout(() => {
+        const character = Converter.toCharacter(SignalBuffer.morseCode) ?? '[?]';
+        document.getElementById('output').textContent += character.toUpperCase();
+        SignalBuffer.clear();
+    }, letterGap);
+
+    timeoutId22 = setTimeout(() => {
+        document.getElementById('output').textContent += ' ';
+    }, wordGap);
+};
 
 document.getElementById('play-example').addEventListener('click', () => {
     const text = document.getElementById('example-text').value;
@@ -300,7 +193,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
     const useSymbol = false; //記号を含めるか
     const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
-    const dotDuration = 100;
+    const dotDuration = 200;
     const dashDuration = dotDuration * 3;
     const signalGap = dotDuration;
     const letterGap = dotDuration * 3;
@@ -329,7 +222,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
             const referenceText = createReferenceText(reference);
             document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
         }
-        normalizedText = 'a';
+        normalizedText = 'y';
         const characters = [...normalizedText];
         play();
 
@@ -340,14 +233,14 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
             if (signals) {
                 for (const signal of signals) {
                     const duration = signal === '.' ? dotDuration : dashDuration;
-                    document.getElementById('log').append('[p]');
+                    // document.getElementById('log').append('[p]');
                     try {
-                        document.getElementById('log').append('[try1]');
+                        // document.getElementById('log').append('[try1]');
                         await Beep.play(duration);
-                        document.getElementById('log').append('[try2]');
+                        // document.getElementById('log').append('[try2]');
                     } catch(error) {
-                        document.getElementById('log').append('[catch]');
-                        document.getElementById('log').append(error.message);
+                        // document.getElementById('log').append('[catch]');
+                        // document.getElementById('log').append(error.message);
                     }
                     await wait(signalGap);
                 }
