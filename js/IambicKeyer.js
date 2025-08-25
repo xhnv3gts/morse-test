@@ -15,14 +15,14 @@ export default class IambicKeyer {
     static onsignalend;
     static #keyToSignal = {};
     static #signalDuration;
-    static #signalSpacing;
+    static #signalSpace;
     static #currentSignal;
     static #nextSignal;
     static #isHolding = {};
     static initialize(dotKey, dashKey, dotDuration) {
         this.#keyToSignal = { [dotKey]: new Signal('.'), [dashKey]: new Signal('-') };
         this.#signalDuration = { '.': dotDuration, '-': dotDuration * 3 };
-        this.#signalSpacing = dotDuration;
+        this.#signalSpace = dotDuration;
     }
     static async #process(signal) {
         this.onsignalstart?.(signal);
@@ -43,7 +43,7 @@ export default class IambicKeyer {
             } else {
                 this.#currentSignal = null;
             }
-        }, this.#signalSpacing);
+        }, this.#signalSpace);
     }
     static {
         const isRegisteredKey = key => Object.hasOwn(this.#keyToSignal, key);
