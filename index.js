@@ -1,16 +1,37 @@
-import IambicKeyer from './js/IambicKeyer.js';
 import Beep from './js/Beep.js';
+import IambicKeyer from './js/IambicKeyer.js';
 
-//グローバル変数------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//設定
 const dotDuration = 50;
-const dashDuration = dotDuration * 3;
-const signalGap = dotDuration;
-const letterGap = dotDuration * 3;
-const wordGap = dotDuration * 7;
-
 const defaultConvertMode = 'EN_ONLY';
+const dotKey = 'ArrowLeft';
+const dashKey = 'ArrowUp';
 
-//クラス------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//ショートカットキー
+window.addEventListener('keydown', e => {
+    if (e.repeat) { return; }
+    switch (e.key) {
+        case 'Delete':
+            if (document.activeElement !== document.getElementById('example-text')) {
+                document.getElementById('clear-output').dispatchEvent(new Event('click'));
+            }
+            break;
+        case 'ArrowDown':
+            document.getElementById('practice-reception').dispatchEvent(new Event('click'));
+            break;
+        case 'v':
+            document.getElementById('show-answer').dispatchEvent(new Event('click'));
+            break;
+    }
+    switch (e.code) {
+        case 'ArrowRight':
+            e.preventDefault();
+            document.getElementById('listen-again').dispatchEvent(new Event('click'));
+            break;
+    }
+});
+
+//
 class Converter {
     static #MODE = { EN_FIRST: ['欧文優先', 'en', true], JA_FIRST: ['和文優先', 'ja', true], EN_ONLY: ['欧文のみ', 'en', false], JA_ONLY: ['和文のみ', 'ja', false] };
     static get MODE() { return this.#MODE; }
@@ -44,83 +65,97 @@ class Converter {
     }
 }
 
-class SignalBuffer {
-    static #signals = [];
-    static get morseCode() { return this.#signals.join(''); }
-    static append(signal) {
-        this.#signals.push(signal);
-    }
-    static clear() {
-        this.#signals = [];
-    }
-}
+// document.addEventListener("visibilitychange", () => {
+//     document.getElementById('log').append('[vc]');
+//     if (document.visibilityState === "hidden") {
+//         document.getElementById('log').append('[h]');
+//         Beep.cancel();
+//     } else if (document.visibilityState === "visible") {
+//         document.getElementById('log').append('[v]');
+//     }
+// });
 
-window.addEventListener('keydown', e => {
-    if (e.repeat) { return; }
-    switch (e.key) {
-        case 'Delete': //todo
-            if (document.activeElement !== document.getElementById('example-text')) {
-                document.getElementById('clear-output').dispatchEvent(new Event('click'));
-            }
-            break;
-        case 'ArrowDown':
-            document.getElementById('practice-reception').dispatchEvent(new Event('click'));
-            break;
-        case 'v':
-            document.getElementById('show-answer').dispatchEvent(new Event('click'));
-            break;
-    }
-    switch (e.code) {
-        case 'ArrowRight':
-            e.preventDefault();
-            document.getElementById('listen-again').dispatchEvent(new Event('click'));
-            break;
-    }
-});
+// document.getElementById('test1').addEventListener('click', () => {
+//     document.getElementById('log').append('[t1]');
+//     Beep.cancel();
+// });
 
-IambicKeyer.initialize('ArrowLeft', 'ArrowUp', dotDuration);
+//共通------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
+document.getElementById('volume').dispatchEvent(new Event('input'));
+
+//送信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+const output = document.getElementById('output');
+const signals = [];
+let timeoutId1, timeoutId2;
+const letterSpace = dotDuration * 3;
+const wordSpace = dotDuration * 7;
+
+IambicKeyer.initialize(dotKey, dashKey, dotDuration);
 IambicKeyer.onsignalstart = signal => {
-    clearTimeout(timeoutId11);
-    clearTimeout(timeoutId22);
-    SignalBuffer.append(signal);
+    clearTimeout(timeoutId1);
+    clearTimeout(timeoutId2);
+    signals.push(signal);
 };
-let timeoutId11, timeoutId22;
 IambicKeyer.onsignalend = () => {
-    timeoutId11 = setTimeout(() => {
-        const character = Converter.toCharacter(SignalBuffer.morseCode) ?? '[?]';
-        document.getElementById('output').textContent += character.toUpperCase();
-        SignalBuffer.clear();
-    }, letterGap);
-
-    timeoutId22 = setTimeout(() => {
-        document.getElementById('output').textContent += ' ';
-    }, wordGap);
+    timeoutId1 = setTimeout(() => {
+        const morseCode = signals.join('');
+        const character = Converter.toCharacter(morseCode) ?? '[?]';
+        output.textContent += character.toUpperCase();
+        signals.length = 0;
+    }, letterSpace);
+    timeoutId2 = setTimeout(() => {
+        output.textContent += ' ';
+    }, wordSpace);
 };
+document.getElementById('clear-output').addEventListener('click', () => output.textContent = '');
 
-document.getElementById('play-example').addEventListener('click', () => {
-    const text = document.getElementById('example-text').value;
-    const normalizedText = getNormalizedText(text);
-    const characters = [...normalizedText];
-    play();
+//受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    async function play(index = 0) {
-        if (index >= characters.length) { return; }
-        const character = characters[index];
+
+class Player {
+    static #isPlaying = false;
+    static #dotDuration = dotDuration;
+    static #dashDuration = this.#dotDuration * 3;
+    static #signalSpace = this.#dotDuration;
+    static #letterSpace = this.#dotDuration * 3;
+    static #wordSpace = this.#dotDuration * 7;
+    static #normalizedText;
+    static #characters;
+    static #index;
+    static set(text) {
+        this.#normalizedText = getNormalizedText(text);
+        this.#characters = [...this.#normalizedText];
+    }
+    static async play(index = 0) {
+        if (index >= this.#characters.length) { return; }
+        const character = this.#characters[index];
         const signals = Converter.toMorseCode(character);
         if (signals) {
             for (const signal of signals) {
-                const duration = signal === '.' ? dotDuration : dashDuration;
+                const duration = signal === '.' ? this.#dotDuration : this.#dashDuration;
                 await Beep.play(duration);
-                await wait(signalGap);
+                await wait(this.#signalSpace);
             }
-            if (characters[index + 1]) {
-                await wait(letterGap);
-                play(index + 1);
+            if (this.#characters[index + 1]) {
+                await wait(this.#letterSpace);
+                this.play(index + 1);
             }
         } else {
-            setTimeout(play, wordGap, index + 1);
+            setTimeout(() => {
+                this.play(index + 1);
+            }, this.#wordSpace);
         }
     }
+    static stop() {
+
+    }
+}
+
+document.getElementById('play-example').addEventListener('click', () => {
+    const text = document.getElementById('example-text').value;
+    Player.set(text);
+    Player.play();
 });
 
 function wait(duration) {
@@ -193,12 +228,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
     const useSymbol = false; //記号を含めるか
     const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
-    const dotDuration = 200;
-    const dashDuration = dotDuration * 3;
-    const signalGap = dotDuration;
-    const letterGap = dotDuration * 3;
-    const wordGap = dotDuration * 7;
-
+    let text2;
     let normalizedText;
 
     function createReferenceText(reference) {
@@ -214,69 +244,24 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
 
         if (wordNum === 1) {
             const word = await getRandomWord();
+            Player.set(word);
+            text2 = word;
             normalizedText = getNormalizedText(word);
             document.getElementById('answer').textContent = normalizedText;
         } else {
             const [text, reference] = await getText(wordNum);
+            Player.set(text);
+            text2 = text;
             normalizedText = getNormalizedText(text);
             const referenceText = createReferenceText(reference);
             document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
         }
-        normalizedText = 'y';
-        const characters = [...normalizedText];
-        play();
-
-        async function play(index = 0) {
-            if (index >= characters.length) { return; }
-            const character = characters[index];
-            const signals = Converter.toMorseCode(character);
-            if (signals) {
-                for (const signal of signals) {
-                    const duration = signal === '.' ? dotDuration : dashDuration;
-                    // document.getElementById('log').append('[p]');
-                    try {
-                        // document.getElementById('log').append('[try1]');
-                        await Beep.play(duration);
-                        // document.getElementById('log').append('[try2]');
-                    } catch(error) {
-                        // document.getElementById('log').append('[catch]');
-                        // document.getElementById('log').append(error.message);
-                    }
-                    await wait(signalGap);
-                }
-                if (characters[index + 1]) {
-                    await wait(letterGap);
-                    play(index + 1);
-                }
-            } else {
-                setTimeout(play, wordGap, index + 1);
-            }
-        }
+        Player.play();
     });
 
     document.getElementById('listen-again').addEventListener('click', () => {
-        if (!normalizedText) { return; }
-        const characters = [...normalizedText];
-        play();
-
-        async function play(index = 0) {
-            if (index >= characters.length) { return; }
-            const character = characters[index];
-            const signals = Converter.toMorseCode(character);
-            if (signals) {
-                for (const signal of signals) {
-                    const duration = signal === '.' ? dotDuration : dashDuration;
-                    await Beep.play(duration);
-                    await wait(signalGap);
-                }
-                if (characters[index + 1]) {
-                    await wait(letterGap);
-                    play(index + 1);
-                }
-            } else {
-                setTimeout(play, wordGap, index + 1);
-            }
-        }
+        if (!text2) { return; }
+        Player.play();
     });
 
     document.getElementById('show-answer').addEventListener('click', () => {
@@ -289,15 +274,14 @@ document.getElementById('convert-mode').addEventListener('change', e => {
     const mode = e.target.value;
     Converter.setMode(Converter.MODE[e.target.value]);
 });
-document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
-document.getElementById('clear-output').addEventListener('click', () => document.getElementById('output').textContent = '');
 
 //初期化------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('convert-mode').append(...Object.entries(Converter.MODE).map(([value, [text]]) => value === defaultConvertMode ? new Option(text, value, true, true) : new Option(text, value)));
 // document.getElementById('convert-mode').append(...Object.keys(Converter.MODE).map(convertMode => convertMode === defaultConvertMode ? new Option(text, value, true, true) : new Option(text, value)));
 
 document.getElementById('convert-mode').dispatchEvent(new Event('change'));
-document.getElementById('volume').dispatchEvent(new Event('input'));
+
+
 
 //キャンバス
 const canvas = document.getElementById('canvas');
