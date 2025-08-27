@@ -5,7 +5,7 @@ export default class Beep {
     static #audioCtx;
     static #oscillatorNode;
     static #waveform = 'sawtooth';
-    static #frequency = 900;
+    static #frequency = 880;
     static #gainNode;
     static #gain = 0;
     static #volume = 0;
@@ -22,7 +22,8 @@ export default class Beep {
                 this.#isPlaying = false;
                 this.#resetAudioCtxTimeoutId = setTimeout(async () => {
                     await this.#audioCtx.close();
-                    this.#initializeAudioCtx();
+                    // this.#initializeAudioCtx();
+                    this.#audioCtx = null;
                 }, this.#RESET_AUDIO_CTX_TIMEOUT);
                 resolve();
             };
