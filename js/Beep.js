@@ -1,7 +1,7 @@
 export default class Beep {
     static #isPlaying = false;
-    static #resetAudioCtxTimeoutId;
-    static #RESET_AUDIO_CTX_TIMEOUT = 5000;
+    static #closeAudioCtxTimeoutId;
+    static #CLOSE_AUDIO_CTX_TIMEOUT = 5000;
     static #audioCtx;
     static #oscillatorNode;
     static #waveform = 'sawtooth';
@@ -13,18 +13,17 @@ export default class Beep {
     static play(duration) {
         if (this.#isPlaying) { return Promise.resolve(); }
         this.#isPlaying = true;
-        clearTimeout(this.#resetAudioCtxTimeoutId);
+        clearTimeout(this.#closeAudioCtxTimeoutId);
 
         if (!this.#audioCtx) { this.#initializeAudioCtx(); }
         return new Promise(resolve => {
             const oscillatorNode = this.#oscillatorNode = new OscillatorNode(this.#audioCtx, { type: this.#waveform, frequency: this.#frequency });
             oscillatorNode.onended = () => {
                 this.#isPlaying = false;
-                this.#resetAudioCtxTimeoutId = setTimeout(async () => {
+                this.#closeAudioCtxTimeoutId = setTimeout(async () => {
                     await this.#audioCtx.close();
-                    // this.#initializeAudioCtx();
                     this.#audioCtx = null;
-                }, this.#RESET_AUDIO_CTX_TIMEOUT);
+                }, this.#CLOSE_AUDIO_CTX_TIMEOUT);
                 resolve();
             };
             oscillatorNode.connect(this.#gainNode).connect(this.#audioCtx.destination);
