@@ -65,20 +65,21 @@ class Converter {
     }
 }
 
-// document.addEventListener("visibilitychange", () => {
-//     document.getElementById('log').append('[vc]');
-//     if (document.visibilityState === "hidden") {
-//         document.getElementById('log').append('[h]');
-//         Beep.cancel();
-//     } else if (document.visibilityState === "visible") {
-//         document.getElementById('log').append('[v]');
-//     }
-// });
+document.addEventListener("visibilitychange", () => {
+    document.getElementById('log').append('[vc]');
+    if (document.visibilityState === "hidden") {
+        document.getElementById('log').append('[h]');
+        // Beep.cancel();
+        Player.stop();
+    } else if (document.visibilityState === "visible") {
+        document.getElementById('log').append('[v]');
+    }
+});
 
-// document.getElementById('test1').addEventListener('click', () => {
-//     document.getElementById('log').append('[t1]');
-//     Beep.cancel();
-// });
+document.getElementById('test1').addEventListener('click', () => {
+    document.getElementById('log').append('[t1]');
+    Player.stop();
+});
 
 //共通------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
@@ -112,55 +113,108 @@ document.getElementById('clear-output').addEventListener('click', () => output.t
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// this.#normalizedText = getNormalizedText(text);
 
 class Player {
     static #isPlaying = false;
-    static #dotDuration = dotDuration;
-    static #dashDuration = this.#dotDuration * 3;
-    static #signalSpace = this.#dotDuration;
-    static #letterSpace = this.#dotDuration * 3;
-    static #wordSpace = this.#dotDuration * 7;
-    static #normalizedText;
-    static #characters;
-    static #index;
-    static set(text) {
-        this.#normalizedText = getNormalizedText(text);
-        this.#characters = [...this.#normalizedText];
-    }
-    static async play(index = 0) {
-        if (index >= this.#characters.length) { return; }
-        const character = this.#characters[index];
-        const signals = Converter.toMorseCode(character);
-        if (signals) {
-            for (const signal of signals) {
-                const duration = signal === '.' ? this.#dotDuration : this.#dashDuration;
-                await Beep.play(duration);
-                await wait(this.#signalSpace);
-            }
-            if (this.#characters[index + 1]) {
-                await wait(this.#letterSpace);
-                this.play(index + 1);
-            }
-        } else {
-            setTimeout(() => {
-                this.play(index + 1);
-            }, this.#wordSpace);
+    static #processTimeoutId;
+    static stop() {
+        if (this.#isPlaying) {
+            Player.#isBeepCanceled = true;
+            Beep.cancel();
+            clearTimeout(this.#processTimeoutId);
+            this.#isPlaying = false;
         }
     }
-    static stop() {
 
+    static #isBeepCanceled = false;
+    #signalDuration;
+    #signalSpace;
+    #letterSpace;
+    #wordSpace;
+    #signals;
+    #wordIndex;
+    #letterIndex;
+    #signalIndex;
+    constructor(dotDuration) {
+        this.#setDurationAndSpace(dotDuration);
+    }
+    set(text) {
+        this.#signals = textToSignals(text);
+        this.#resetIndex();
+
+        function textToSignals(text) {
+            return text
+                .trim()
+                .split(/\s+/) // 空白で単語に分割
+                .map(word =>
+                    word.split('') // 1文字ずつ
+                        .map(char => charToSignals(char)) // 文字を信号配列に変換
+                );
+        }
+
+        function charToSignals(char) {
+            const signalStr = Converter.toMorseCode(char);
+            return signalStr.split('');
+        }
+    }
+    play() {
+        this.#resetIndex();
+        Player.#isPlaying = true;
+        Player.#isBeepCanceled = false;
+        this.#process();
+    }
+    #resetIndex() {
+        this.#wordIndex = this.#letterIndex = this.#signalIndex = 0;
+    }
+    async #process() {
+        const signal = this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex];
+        const signalDuration = this.#signalDuration[signal];
+        await Beep.play(signalDuration);
+        if (Player.#isBeepCanceled) {
+            return;
+        }
+
+        const space = (() => {
+            this.#signalIndex++;
+            if (this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex]) { return this.#signalSpace; }
+            
+            this.#signalIndex = 0;
+            this.#letterIndex++;
+            if (this.#signals[this.#wordIndex][this.#letterIndex]) { return this.#letterSpace; }
+
+            this.#letterIndex = 0;
+            this.#wordIndex++;
+            if (this.#signals[this.#wordIndex]) { return this.#wordSpace; }
+
+            return null;
+        })();
+
+
+        if (space) {
+            Player.#processTimeoutId = setTimeout(() => this.#process(), space);
+        } else {
+            Player.#isPlaying = false;
+        }
+
+    }
+    #setDurationAndSpace(dotDuration) {
+        this.#signalDuration = { '.': dotDuration, '-': dotDuration * 3 };
+        this.#signalSpace = dotDuration;
+        this.#letterSpace = dotDuration * 3;
+        this.#wordSpace = dotDuration * 7;
     }
 }
 
+// Converter.setMode(Converter.MODE['EN_ONLY']);
+// Player.set('abc de');
+
+const player = new Player(dotDuration);
 document.getElementById('play-example').addEventListener('click', () => {
     const text = document.getElementById('example-text').value;
-    Player.set(text);
-    Player.play();
+    player.set(text);
+    player.play();
 });
-
-function wait(duration) {
-    return new Promise(resolve => setTimeout(resolve, duration));
-}
 
 function getNormalizedText(text) {
     return text
@@ -225,6 +279,7 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
 }
 
 {
+    const player2 = new Player(dotDuration);
     const useSymbol = false; //記号を含めるか
     const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
@@ -244,24 +299,24 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
 
         if (wordNum === 1) {
             const word = await getRandomWord();
-            Player.set(word);
+            player2.set(word);
             text2 = word;
             normalizedText = getNormalizedText(word);
             document.getElementById('answer').textContent = normalizedText;
         } else {
             const [text, reference] = await getText(wordNum);
-            Player.set(text);
+            player2.set(text);
             text2 = text;
             normalizedText = getNormalizedText(text);
             const referenceText = createReferenceText(reference);
             document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
         }
-        Player.play();
+        player2.play();
     });
 
     document.getElementById('listen-again').addEventListener('click', () => {
         if (!text2) { return; }
-        Player.play();
+        player2.play();
     });
 
     document.getElementById('show-answer').addEventListener('click', () => {
@@ -367,4 +422,3 @@ function getRandomSubarray(array, range) {
     const end = start + range;
     return array.slice(start, end);
 }
-
