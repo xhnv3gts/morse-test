@@ -76,10 +76,10 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-document.getElementById('test1').addEventListener('click', () => {
-    document.getElementById('log').append('[t1]');
-    Player.stop();
-});
+// document.getElementById('test1').addEventListener('click', () => {
+//     document.getElementById('log').append('[t1]');
+//     Player.stop();
+// });
 
 //共通------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
