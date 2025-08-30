@@ -178,7 +178,7 @@ class Player {
         const space = (() => {
             this.#signalIndex++;
             if (this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex]) { return this.#signalSpace; }
-            
+
             this.#signalIndex = 0;
             this.#letterIndex++;
             if (this.#signals[this.#wordIndex][this.#letterIndex]) { return this.#letterSpace; }
