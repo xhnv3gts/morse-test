@@ -65,13 +65,13 @@ class Converter {
     }
 }
 
-document.addEventListener("visibilitychange", () => {
+document.addEventListener('visibilitychange', () => {
     // document.getElementById('log').append('[vc]');
-    if (document.visibilityState === "hidden") {
+    if (document.visibilityState === 'hidden') {
         // document.getElementById('log').append('[h]');
         // Beep.cancel();
         Player.stop();
-    } else if (document.visibilityState === "visible") {
+    } else if (document.visibilityState === 'visible') {
         // document.getElementById('log').append('[v]');
     }
 });
