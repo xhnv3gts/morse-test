@@ -2,7 +2,7 @@ import Beep from './js/Beep.js';
 import IambicKeyer from './js/IambicKeyer.js';
 
 //設定
-const dotDuration = 50;
+const dotDuration = 1000;
 const defaultConvertMode = 'EN_ONLY';
 const dotKey = 'ArrowLeft';
 const dashKey = 'ArrowUp';
