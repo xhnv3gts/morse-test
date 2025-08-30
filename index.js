@@ -2,7 +2,7 @@ import Beep from './js/Beep.js';
 import IambicKeyer from './js/IambicKeyer.js';
 
 //設定
-const dotDuration = 1000;
+const dotDuration = 50;
 const defaultConvertMode = 'EN_ONLY';
 const dotKey = 'ArrowLeft';
 const dashKey = 'ArrowUp';
@@ -367,3 +367,4 @@ function getRandomSubarray(array, range) {
     const end = start + range;
     return array.slice(start, end);
 }
+
