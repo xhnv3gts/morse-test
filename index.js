@@ -112,7 +112,7 @@ IambicKeyer.onsignalend = () => {
 document.getElementById('clear-output').addEventListener('click', () => output.textContent = '');
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+import BibleData from './js/BibleData.js';
 // this.#normalizedText = getNormalizedText(text);
 
 class Player {
@@ -232,51 +232,6 @@ function getNormalizedText(text) {
     }
 }
 
-let words;
-async function getRandomWord() {
-    words ??= await getData('./data/words.json');
-    return getRandomItem(words);
-}
-
-let bookNames;
-let bookCache = {};
-async function getBook(bookName) {
-    bookNames ??= await getData('./data/book-names.json');
-    bookName ??= getRandomItem(bookNames);
-    const book = await (async () => {
-        if (Object.hasOwn(bookCache, bookName)) {
-            return bookCache[bookName];
-        } else {
-            const serialNo = bookNames.indexOf(bookName) + 1;
-            const fileName = `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
-            const book = await getData(`./data/book/${fileName}`);
-            bookCache[bookName] = book;
-            return book;
-        }
-    })();
-    const reference = { bookName };
-    return [book, reference];
-}
-async function getChapter(bookName, chapterNo) {
-    const [bookAsChapters, reference] = await getBook(bookName);
-    chapterNo ??= getRandomIndex(bookAsChapters) + 1;
-    const chapter = bookAsChapters[chapterNo - 1];
-    reference.chapterNo = chapterNo;
-    return [chapter, reference];
-}
-async function getVerse(bookName, chapterNo, verseNo) {
-    const [chapterAsVerses, reference] = await getChapter(bookName, chapterNo);
-    verseNo ??= getRandomIndex(chapterAsVerses) + 1;
-    const verse = chapterAsVerses[verseNo - 1];
-    reference.verseNo = verseNo;
-    return [verse, reference];
-}
-async function getText(wordCount, bookName, chapterNo, verseNo) {
-    const [verse, reference] = await getVerse(bookName, chapterNo, verseNo);
-    const words = verse.split(' ');
-    const text = getRandomSubarray(words, wordCount).join(' ');
-    return [text, reference];
-}
 
 {
     const player2 = new Player(dotDuration);
@@ -298,14 +253,16 @@ async function getText(wordCount, bookName, chapterNo, verseNo) {
         document.getElementById('answer').style.visibility = 'hidden';
 
         if (wordNum === 1) {
-            const word = await getRandomWord();
+            const word = await BibleData.getRandomWord();
             player2.set(word);
             text2 = word;
             normalizedText = getNormalizedText(word);
             document.getElementById('answer').textContent = normalizedText;
         } else {
-            const [text, reference] = await getText(wordNum);
-            player2.set(text);
+            const [text, reference] = await BibleData.getText(wordNum);
+            console.log(text);
+            const nText = getNormalizedText(text); //暫定
+            player2.set(nText);
             text2 = text;
             normalizedText = getNormalizedText(text);
             const referenceText = createReferenceText(reference);
@@ -395,30 +352,3 @@ document.getElementById('clear-canvas').addEventListener('click', () => {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 });
-
-async function getData(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) { throw new Error(`Response status: ${response.status}`); }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error(error.message);
-        return null;
-    }
-}
-
-function getRandomIndex(array) {
-    return Math.floor(Math.random() * array.length);
-}
-function getRandomItem(array) {
-    const index = getRandomIndex(array);
-    return array[index];
-}
-function getRandomSubarray(array, range) {
-    if (range <= 0) { return null; }
-    if (range >= array.length) { return array; }
-    const start = Math.floor(Math.random() * (array.length - range + 1));
-    const end = start + range;
-    return array.slice(start, end);
-}
