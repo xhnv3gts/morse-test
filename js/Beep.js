@@ -43,7 +43,7 @@ export default class Beep {
         if (this.#isPlaying) { this.#oscillatorNode.frequency.value = frequency; }
     }
     static setVolume(volume) {
-        this.#volume = (!Number.isInteger(volume) || volume < 0) ? 0 : (volume > 100) ? 100 : volume;
+        this.#volume = (!Number.isInteger(volume) || volume <= 0) ? 0 : (volume >= 100) ? 100 : volume;
         this.#gain = this.#volume * this.#VOLUME_SCALE_FACTOR;
         if (this.#gainNode) { this.#gainNode.gain.value = this.#gain; }
     }
