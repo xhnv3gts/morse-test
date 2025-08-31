@@ -64,22 +64,27 @@ class Converter {
         }
     }
 }
+function getNormalizedText(text) {
+    return text
+        .toLowerCase()
+        .replaceAll(/[\u3041-\u3096]/g, c => shiftCharacter(c, 0x60))
+        .replaceAll(/[ァィゥェォッャュョヮ]/g, c => shiftCharacter(c, 0x1))
+        .replaceAll(/[ガギグゲゴザジズゼゾダヂヅデドバビブベボ]/g, c => `${shiftCharacter(c, -0x1)}゛`)
+        .replaceAll(/[パピプペポ]/g, c => `${shiftCharacter(c, -0x2)}゜`)
+        .replaceAll('ヴ', 'ウ゛')
+        .replaceAll('ヵ', 'カ')
+        .replaceAll('ヶ', 'ケ');
+
+    function shiftCharacter(character, charCodeOffset) {
+        return String.fromCharCode(character.charCodeAt(0) + charCodeOffset);
+    }
+}
 
 document.addEventListener('visibilitychange', () => {
-    // document.getElementById('log').append('[vc]');
     if (document.visibilityState === 'hidden') {
-        // document.getElementById('log').append('[h]');
-        // Beep.cancel();
         Player.stop();
-    } else if (document.visibilityState === 'visible') {
-        // document.getElementById('log').append('[v]');
     }
 });
-
-// document.getElementById('test1').addEventListener('click', () => {
-//     document.getElementById('log').append('[t1]');
-//     Player.stop();
-// });
 
 //共通------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
@@ -113,7 +118,6 @@ document.getElementById('clear-output').addEventListener('click', () => output.t
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 import BibleData from '/js/BibleData.js';
-// this.#normalizedText = getNormalizedText(text);
 
 class Player {
     static #isPlaying = false;
@@ -206,31 +210,12 @@ class Player {
     }
 }
 
-// Converter.setMode(Converter.MODE['EN_ONLY']);
-// Player.set('abc de');
-
 const player = new Player(dotDuration);
 document.getElementById('play-example').addEventListener('click', () => {
     const text = document.getElementById('example-text').value;
     player.set(text);
     player.play();
 });
-
-function getNormalizedText(text) {
-    return text
-        .toLowerCase()
-        .replaceAll(/[\u3041-\u3096]/g, c => shiftCharacter(c, 0x60))
-        .replaceAll(/[ァィゥェォッャュョヮ]/g, c => shiftCharacter(c, 0x1))
-        .replaceAll(/[ガギグゲゴザジズゼゾダヂヅデドバビブベボ]/g, c => `${shiftCharacter(c, -0x1)}゛`)
-        .replaceAll(/[パピプペポ]/g, c => `${shiftCharacter(c, -0x2)}゜`)
-        .replaceAll('ヴ', 'ウ゛')
-        .replaceAll('ヵ', 'カ')
-        .replaceAll('ヶ', 'ケ');
-
-    function shiftCharacter(character, charCodeOffset) {
-        return String.fromCharCode(character.charCodeAt(0) + charCodeOffset);
-    }
-}
 
 
 {
