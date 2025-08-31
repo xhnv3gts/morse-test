@@ -1,4 +1,4 @@
-import Beep from '/js/Beep.js';
+import Beep from './Beep.js';
 
 class Signal {
     #signal;
