@@ -1,5 +1,5 @@
-import Beep from '/js/Beep.js';
-import IambicKeyer from '/js/IambicKeyer.js';
+import Beep from './js/Beep.js';
+import IambicKeyer from './js/IambicKeyer.js';
 
 //設定
 const dotDuration = 50;
@@ -117,7 +117,7 @@ IambicKeyer.onsignalend = () => {
 document.getElementById('clear-output').addEventListener('click', () => output.textContent = '');
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-import BibleData from '/js/BibleData.js';
+import BibleData from './js/BibleData.js';
 
 class Player {
     static #isPlaying = false;
