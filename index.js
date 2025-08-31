@@ -221,7 +221,7 @@ document.getElementById('play-example').addEventListener('click', () => {
 {
     const player2 = new Player(dotDuration);
     const useSymbol = false; //記号を含めるか
-    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+    const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
     let text2;
     let normalizedText;
