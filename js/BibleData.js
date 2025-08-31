@@ -1,15 +1,15 @@
-import { getData, getRandomItem, getRandomIndex, getRandomSubarray } from './utils.js';
+import { getData, getRandomItem, getRandomIndex, getRandomSubarray } from '/js/utils.js';
 
 export default class BibleData {
     static #words;
     static async getRandomWord() {
-        this.#words ??= await getData('./data/words.json');
+        this.#words ??= await getData('/data/words.json');
         return getRandomItem(this.#words);
     }
     static #bookNames;
     static #bookCache = {};
     static async getBook(bookName) {
-        this.#bookNames ??= await getData('./data/book-names.json');
+        this.#bookNames ??= await getData('/data/book-names.json');
         bookName ??= getRandomItem(this.#bookNames);
         const book = await (async () => {
             if (Object.hasOwn(this.#bookCache, bookName)) {
@@ -17,7 +17,7 @@ export default class BibleData {
             } else {
                 const serialNo = this.#bookNames.indexOf(bookName) + 1;
                 const fileName = `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
-                const book = await getData(`./data/book/${fileName}`);
+                const book = await getData(`/data/book/${fileName}`);
                 this.#bookCache[bookName] = book;
                 return book;
             }
