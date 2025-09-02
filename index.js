@@ -1,9 +1,10 @@
 import Beep from './js/Beep.js';
 import IambicKeyer from './js/IambicKeyer.js';
+import Converter from './js/Converter.js';
 
 //設定
 const dotDuration = 50;
-const defaultConvertMode = 'EN_ONLY';
+const defaultConvertMode = Converter.DECODING_MODE.EN_ONLY;
 const dotKey = 'ArrowLeft';
 const dashKey = 'ArrowUp';
 
@@ -31,55 +32,6 @@ window.addEventListener('keydown', e => {
     }
 });
 
-//
-class Converter {
-    static #MODE = { EN_FIRST: ['欧文優先', 'en', true], JA_FIRST: ['和文優先', 'ja', true], EN_ONLY: ['欧文のみ', 'en', false], JA_ONLY: ['和文のみ', 'ja', false] };
-    static get MODE() { return this.#MODE; }
-    static #letterToMorseCode = {
-        'en': { 'a': '.-', 'b': '-...', 'c': '-.-.', 'd': '-..', 'e': '.', 'f': '..-.', 'g': '--.', 'h': '....', 'i': '..', 'j': '.---', 'k': '-.-', 'l': '.-..', 'm': '--', 'n': '-.', 'o': '---', 'p': '.--.', 'q': '--.-', 'r': '.-.', 's': '...', 't': '-', 'u': '..-', 'v': '...-', 'w': '.--', 'x': '-..-', 'y': '-.--', 'z': '--..' },
-        'ja': { 'ア': '--.--', 'イ': '.-', 'ウ': '..-', 'エ': '-.---', 'オ': '.-...', 'カ': '.-..', 'キ': '-.-..', 'ク': '...-', 'ケ': '-.--', 'コ': '----', 'サ': '-.-.-', 'シ': '--.-.', 'ス': '---.-', 'セ': '.---.', 'ソ': '---.', 'タ': '-.', 'チ': '..-.', 'ツ': '.--.', 'テ': '.-.--', 'ト': '..-..', 'ナ': '.-.', 'ニ': '-.-.', 'ヌ': '....', 'ネ': '--.-', 'ノ': '..--', 'ハ': '-...', 'ヒ': '--..-', 'フ': '--..', 'ヘ': '.', 'ホ': '-..', 'マ': '-..-', 'ミ': '..-.-', 'ム': '-', 'メ': '-...-', 'モ': '-..-.', 'ヤ': '.--', 'ユ': '-..--', 'ヨ': '--', 'ラ': '...', 'リ': '--.', 'ル': '-.--.', 'レ': '---', 'ロ': '.-.-', 'ワ': '-.-', 'ヰ': '.-..-', 'ヱ': '.--..', 'ヲ': '.---', 'ン': '.-.-.' }
-    };
-    static #numberToMorseCode = { '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----' };
-    static #symbolToMorseCode = {
-        'en': { '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '"': '.-..-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '/': '-..-.', '(': '-.--.', ')': '-.--.-', ':': '---...', '@': '.--.-.' },
-        'ja': { '゛': '..', '゜': '..--.', 'ー': '.--.-', '、': '.-.-.-', '（': '-.--.-', '）': '.-..-.' }
-    };
-    static #characterToMorseCode = { primary: {}, secondary: {} };
-    static #morseCodeToCharacter = { primary: {}, secondary: {} };
-    static toMorseCode(character) {
-        return this.#characterToMorseCode.primary[character] ?? this.#characterToMorseCode.secondary[character];
-    }
-    static toCharacter(morseCode) {
-        return this.#morseCodeToCharacter.primary[morseCode] ?? this.#morseCodeToCharacter.secondary[morseCode];
-    }
-    static setMode([, primaryLang, useSecondary]) {
-        this.#characterToMorseCode.primary = { ...this.#letterToMorseCode[primaryLang], ...this.#numberToMorseCode, ...this.#symbolToMorseCode[primaryLang] };
-        this.#morseCodeToCharacter.primary = swapKeyValue(this.#characterToMorseCode.primary);
-        const secondaryLang = { 'en': 'ja', 'ja': 'en' }[primaryLang];
-        this.#characterToMorseCode.secondary = useSecondary ? { ...this.#letterToMorseCode[secondaryLang], ...this.#symbolToMorseCode[secondaryLang] } : {};
-        this.#morseCodeToCharacter.secondary = swapKeyValue(this.#characterToMorseCode.secondary);
-
-        function swapKeyValue(obj) {
-            return Object.fromEntries(Object.entries(obj).map(([key, value]) => [value, key]));
-        }
-    }
-}
-function getNormalizedText(text) {
-    return text
-        .toLowerCase()
-        .replaceAll(/[\u3041-\u3096]/g, c => shiftCharacter(c, 0x60))
-        .replaceAll(/[ァィゥェォッャュョヮ]/g, c => shiftCharacter(c, 0x1))
-        .replaceAll(/[ガギグゲゴザジズゼゾダヂヅデドバビブベボ]/g, c => `${shiftCharacter(c, -0x1)}゛`)
-        .replaceAll(/[パピプペポ]/g, c => `${shiftCharacter(c, -0x2)}゜`)
-        .replaceAll('ヴ', 'ウ゛')
-        .replaceAll('ヵ', 'カ')
-        .replaceAll('ヶ', 'ケ');
-
-    function shiftCharacter(character, charCodeOffset) {
-        return String.fromCharCode(character.charCodeAt(0) + charCodeOffset);
-    }
-}
-
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         Player.stop();
@@ -106,7 +58,7 @@ IambicKeyer.onsignalstart = signal => {
 IambicKeyer.onsignalend = () => {
     timeoutId1 = setTimeout(() => {
         const morseCode = signals.join('');
-        const character = Converter.toCharacter(morseCode) ?? '[?]';
+        const character = Converter.morseCodeToText(morseCode) ?? '[?]';
         output.textContent += character.toUpperCase();
         signals.length = 0;
     }, letterSpace);
@@ -118,6 +70,7 @@ document.getElementById('clear-output').addEventListener('click', () => output.t
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 import BibleData from './js/BibleData.js';
+import { getData } from './js/utils.js';
 
 class Player {
     static #isPlaying = false;
@@ -144,23 +97,14 @@ class Player {
         this.#setDurationAndSpace(dotDuration);
     }
     set(text) {
-        this.#signals = textToSignals(text);
+        const morseCode = Converter.textToMorseCode(text);
+        this.#signals = morseCode.split(Converter.WORD_SEPARATOR).map(mcWord => {
+            return mcWord.split(Converter.CHARACTER_SEPARATOR).map(mcCharacter => {
+                return mcCharacter.split('')
+            })
+        })
+        // this.#signals = textToSignals(text);
         this.#resetIndex();
-
-        function textToSignals(text) {
-            return text
-                .trim()
-                .split(/\s+/) // 空白で単語に分割
-                .map(word =>
-                    word.split('') // 1文字ずつ
-                        .map(char => charToSignals(char)) // 文字を信号配列に変換
-                );
-        }
-
-        function charToSignals(char) {
-            const signalStr = Converter.toMorseCode(char);
-            return signalStr.split('');
-        }
     }
     play() {
         this.#resetIndex();
@@ -221,10 +165,9 @@ document.getElementById('play-example').addEventListener('click', () => {
 {
     const player2 = new Player(dotDuration);
     const useSymbol = false; //記号を含めるか
-    const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
+    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
 
     let text2;
-    let normalizedText;
 
     function createReferenceText(reference) {
         const { bookName, chapterNo, verseNo } = reference;
@@ -241,17 +184,14 @@ document.getElementById('play-example').addEventListener('click', () => {
             const word = await BibleData.getRandomWord();
             player2.set(word);
             text2 = word;
-            normalizedText = getNormalizedText(word);
-            document.getElementById('answer').textContent = normalizedText;
+            document.getElementById('answer').textContent = word;
         } else {
             const [text, reference] = await BibleData.getText(wordNum);
             console.log(text);
-            const nText = getNormalizedText(text); //暫定
-            player2.set(nText);
+            player2.set(text);
             text2 = text;
-            normalizedText = getNormalizedText(text);
             const referenceText = createReferenceText(reference);
-            document.getElementById('answer').textContent = `${normalizedText} (${referenceText})`;
+            document.getElementById('answer').textContent = `${text} (${referenceText})`;
         }
         player2.play();
     });
@@ -269,12 +209,20 @@ document.getElementById('play-example').addEventListener('click', () => {
 //イベントリスナー追加------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('convert-mode').addEventListener('change', e => {
     const mode = e.target.value;
-    Converter.setMode(Converter.MODE[e.target.value]);
+    Converter.setDecodingMode(e.target.value);
 });
 
 //初期化------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-document.getElementById('convert-mode').append(...Object.entries(Converter.MODE).map(([value, [text]]) => value === defaultConvertMode ? new Option(text, value, true, true) : new Option(text, value)));
-// document.getElementById('convert-mode').append(...Object.keys(Converter.MODE).map(convertMode => convertMode === defaultConvertMode ? new Option(text, value, true, true) : new Option(text, value)));
+
+document.getElementById('convert-mode').append(...Object.values(Converter.DECODING_MODE).map(value => {
+    const text = {
+        [Converter.DECODING_MODE.EN_FIRST]: '欧文優先',
+        [Converter.DECODING_MODE.EN_ONLY]: '欧文のみ',
+        [Converter.DECODING_MODE.JA_FIRST]: '和文優先',
+        [Converter.DECODING_MODE.JA_ONLY]: '和文のみ',
+    }[value];
+    return value === defaultConvertMode ? new Option(text, value, true, true) : new Option(text, value);
+}));
 
 document.getElementById('convert-mode').dispatchEvent(new Event('change'));
 
@@ -337,3 +285,15 @@ document.getElementById('clear-canvas').addEventListener('click', () => {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 });
+
+// let morseCodeGV;
+// document.getElementById('test1').addEventListener('click', () => {
+//     morseCodeGV = Converter.textToMorseCode('abc de f');
+//     document.getElementById('log').textContent = morseCodeGV;
+// })
+
+
+// document.getElementById('test2').addEventListener('click', () => {
+//     const text = Converter.morseCodeToText('.- ...-|. -..');
+//     document.getElementById('log').textContent = text;
+// })
