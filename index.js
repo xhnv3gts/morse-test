@@ -70,89 +70,7 @@ document.getElementById('clear-output').addEventListener('click', () => output.t
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 import BibleData from './js/BibleData.js';
-import { getData } from './js/utils.js';
-
-class Player {
-    static #isPlaying = false;
-    static #processTimeoutId;
-    static stop() {
-        if (this.#isPlaying) {
-            Player.#isBeepCanceled = true;
-            Beep.cancel();
-            clearTimeout(this.#processTimeoutId);
-            this.#isPlaying = false;
-        }
-    }
-
-    static #isBeepCanceled = false;
-    #signalDuration;
-    #signalSpace;
-    #letterSpace;
-    #wordSpace;
-    #signals;
-    #wordIndex;
-    #letterIndex;
-    #signalIndex;
-    constructor(dotDuration) {
-        this.#setDurationAndSpace(dotDuration);
-    }
-    set(text) {
-        const morseCode = Converter.textToMorseCode(text);
-        this.#signals = morseCode.split(Converter.WORD_SEPARATOR).map(mcWord => {
-            return mcWord.split(Converter.CHARACTER_SEPARATOR).map(mcCharacter => {
-                return mcCharacter.split('')
-            })
-        })
-        // this.#signals = textToSignals(text);
-        this.#resetIndex();
-    }
-    play() {
-        this.#resetIndex();
-        Player.#isPlaying = true;
-        Player.#isBeepCanceled = false;
-        this.#process();
-    }
-    #resetIndex() {
-        this.#wordIndex = this.#letterIndex = this.#signalIndex = 0;
-    }
-    async #process() {
-        const signal = this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex];
-        const signalDuration = this.#signalDuration[signal];
-        await Beep.play(signalDuration);
-        if (Player.#isBeepCanceled) {
-            return;
-        }
-
-        const space = (() => {
-            this.#signalIndex++;
-            if (this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex]) { return this.#signalSpace; }
-
-            this.#signalIndex = 0;
-            this.#letterIndex++;
-            if (this.#signals[this.#wordIndex][this.#letterIndex]) { return this.#letterSpace; }
-
-            this.#letterIndex = 0;
-            this.#wordIndex++;
-            if (this.#signals[this.#wordIndex]) { return this.#wordSpace; }
-
-            return null;
-        })();
-
-
-        if (space) {
-            Player.#processTimeoutId = setTimeout(() => this.#process(), space);
-        } else {
-            Player.#isPlaying = false;
-        }
-
-    }
-    #setDurationAndSpace(dotDuration) {
-        this.#signalDuration = { '.': dotDuration, '-': dotDuration * 3 };
-        this.#signalSpace = dotDuration;
-        this.#letterSpace = dotDuration * 3;
-        this.#wordSpace = dotDuration * 7;
-    }
-}
+import Player from './js/Player.js';
 
 const player = new Player(dotDuration);
 document.getElementById('play-example').addEventListener('click', () => {
@@ -161,50 +79,47 @@ document.getElementById('play-example').addEventListener('click', () => {
     player.play();
 });
 
+const player2 = new Player(dotDuration);
+const useSymbol = false; //記号を含めるか
+const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
 
-{
-    const player2 = new Player(dotDuration);
-    const useSymbol = false; //記号を含めるか
-    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+let text2;
 
-    let text2;
-
-    function createReferenceText(reference) {
-        const { bookName, chapterNo, verseNo } = reference;
-        let referenceText = bookName;
-        if (chapterNo) { referenceText += ` ${chapterNo}`; }
-        if (verseNo) { referenceText += `:${verseNo}`; }
-        return referenceText;
-    }
-
-    document.getElementById('practice-reception').addEventListener('click', async () => {
-        document.getElementById('answer').style.visibility = 'hidden';
-
-        if (wordNum === 1) {
-            const word = await BibleData.getRandomWord();
-            player2.set(word);
-            text2 = word;
-            document.getElementById('answer').textContent = word;
-        } else {
-            const [text, reference] = await BibleData.getText(wordNum);
-            console.log(text);
-            player2.set(text);
-            text2 = text;
-            const referenceText = createReferenceText(reference);
-            document.getElementById('answer').textContent = `${text} (${referenceText})`;
-        }
-        player2.play();
-    });
-
-    document.getElementById('listen-again').addEventListener('click', () => {
-        if (!text2) { return; }
-        player2.play();
-    });
-
-    document.getElementById('show-answer').addEventListener('click', () => {
-        document.getElementById('answer').style.visibility = 'visible';
-    });
+function createReferenceText(reference) {
+    const { bookName, chapterNo, verseNo } = reference;
+    let referenceText = bookName;
+    if (chapterNo) { referenceText += ` ${chapterNo}`; }
+    if (verseNo) { referenceText += `:${verseNo}`; }
+    return referenceText;
 }
+
+document.getElementById('practice-reception').addEventListener('click', async () => {
+    document.getElementById('answer').style.visibility = 'hidden';
+
+    if (wordNum === 1) {
+        const word = await BibleData.getRandomWord();
+        player2.set(word);
+        text2 = word;
+        document.getElementById('answer').textContent = word;
+    } else {
+        const [text, reference] = await BibleData.getText(wordNum);
+        console.log(text);
+        player2.set(text);
+        text2 = text;
+        const referenceText = createReferenceText(reference);
+        document.getElementById('answer').textContent = `${text} (${referenceText})`;
+    }
+    player2.play();
+});
+
+document.getElementById('listen-again').addEventListener('click', () => {
+    if (!text2) { return; }
+    player2.play();
+});
+
+document.getElementById('show-answer').addEventListener('click', () => {
+    document.getElementById('answer').style.visibility = 'visible';
+});
 
 //イベントリスナー追加------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 document.getElementById('convert-mode').addEventListener('change', e => {
