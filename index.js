@@ -1,6 +1,7 @@
 import Beep from './js/Beep.js';
 import IambicKeyer from './js/IambicKeyer.js';
 import Converter from './js/Converter.js';
+import Player from './js/Player.js';
 
 //設定
 const dotDuration = 50;
@@ -42,6 +43,14 @@ document.addEventListener('visibilitychange', () => {
 document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
 document.getElementById('volume').dispatchEvent(new Event('input'));
 
+//お手本を聴く------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+const player = new Player(dotDuration);
+document.getElementById('play-example').addEventListener('click', () => {
+    const text = document.getElementById('example-text').value;
+    player.set(text);
+    player.play();
+});
+
 //送信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 const output = document.getElementById('output');
 const signals = [];
@@ -70,18 +79,10 @@ document.getElementById('clear-output').addEventListener('click', () => output.t
 
 //受信練習------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 import BibleData from './js/BibleData.js';
-import Player from './js/Player.js';
-
-const player = new Player(dotDuration);
-document.getElementById('play-example').addEventListener('click', () => {
-    const text = document.getElementById('example-text').value;
-    player.set(text);
-    player.play();
-});
 
 const player2 = new Player(dotDuration);
 const useSymbol = false; //記号を含めるか
-const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
 
 let text2;
 
