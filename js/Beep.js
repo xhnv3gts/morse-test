@@ -1,4 +1,7 @@
 export default class Beep {
+    static #PLAYBACK_RESULT = Object.freeze({ COMPLETED: 0, STOPPED: 1, INTERRUPTED: 2 });
+    static get PLAYBACK_RESULT() { return this.#PLAYBACK_RESULT; }
+    static #playbackResult;
     static #isPlaying = false;
     static #closeAudioCtxTimeoutId;
     static #CLOSE_AUDIO_CTX_TIMEOUT = 5000;
@@ -12,6 +15,7 @@ export default class Beep {
     static #VOLUME_SCALE_FACTOR = 0.0006;
     static play(duration) {
         if (this.#isPlaying) { return Promise.resolve(); }
+        this.#playbackResult = null;
         this.#isPlaying = true;
         clearTimeout(this.#closeAudioCtxTimeoutId);
 
@@ -19,20 +23,23 @@ export default class Beep {
         return new Promise(resolve => {
             const oscillatorNode = this.#oscillatorNode = new OscillatorNode(this.#audioCtx, { type: this.#waveform, frequency: this.#frequency });
             oscillatorNode.onended = () => {
+                this.#playbackResult ??= this.#PLAYBACK_RESULT.COMPLETED;
                 this.#isPlaying = false;
                 this.#closeAudioCtxTimeoutId = setTimeout(async () => {
                     await this.#audioCtx.close();
                     this.#audioCtx = null;
                 }, this.#CLOSE_AUDIO_CTX_TIMEOUT);
-                resolve();
+                resolve(this.#playbackResult);
             };
             oscillatorNode.connect(this.#gainNode).connect(this.#audioCtx.destination);
             oscillatorNode.start();
             oscillatorNode.stop(this.#audioCtx.currentTime + duration / 1000);
         });
     }
-    static cancel() {
-        if (this.#isPlaying) { this.#oscillatorNode.stop(); }
+    static stop() {
+        if (!this.#isPlaying) { return; }
+        this.#playbackResult = this.#PLAYBACK_RESULT.STOPPED;
+        this.#oscillatorNode.stop();
     }
     static setWaveform(waveform) {
         this.#waveform = waveform;
@@ -54,6 +61,7 @@ export default class Beep {
         this.#audioCtx = new AudioContext();
         this.#audioCtx.onstatechange = async e => {
             if (e.target.state === 'interrupted') {
+                this.#playbackResult = this.#PLAYBACK_RESULT.INTERRUPTED;
                 this.#gainNode.gain.value = 0;
                 await e.target.resume(); //再開しないとstopが効かない
                 this.#oscillatorNode.stop();
