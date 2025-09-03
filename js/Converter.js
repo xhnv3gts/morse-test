@@ -1,6 +1,6 @@
 import { getData } from "./utils.js";
 
-const characterToMorseCode = await getData('../data/character-to-morse-code.json');
+const characterToMorseCode = await getData('./data/character-to-morse-code.json');
 export default class Converter {
     static #WORD_SEPARATOR = '|';
     static #CHARACTER_SEPARATOR = ' ';
