@@ -7,7 +7,7 @@ export default class Player {
     static stop() {
         if (this.#isPlaying) {
             Player.#isBeepCanceled = true;
-            Beep.cancel();
+            Beep.stop();
             clearTimeout(this.#processTimeoutId);
             this.#isPlaying = false;
         }
