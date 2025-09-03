@@ -1,15 +1,5 @@
 import Beep from './Beep.js';
 
-class Signal {
-    #signal;
-    constructor(signal) {
-        this.#signal = signal;
-    }
-    toString() { return this.#signal; }
-    get oppositeSignal() { return new Signal({ '.': '-', '-': '.' }[this.#signal]); }
-    equals(signal) { return this.toString() === signal.toString(); }
-}
-
 export default class IambicKeyer {
     static onsignalstart;
     static onsignalend;
@@ -20,7 +10,7 @@ export default class IambicKeyer {
     static #nextSignal;
     static #isHolding = {};
     static initialize(dotKey, dashKey, dotDuration) {
-        this.#keyToSignal = { [dotKey]: new Signal('.'), [dashKey]: new Signal('-') };
+        this.#keyToSignal = { [dotKey]: '.', [dashKey]: '-' };
         this.#signalDuration = { '.': dotDuration, '-': dotDuration * 3 };
         this.#signalSpace = dotDuration;
     }
@@ -28,7 +18,7 @@ export default class IambicKeyer {
         this.onsignalstart?.(signal);
 
         const currentSignal = this.#currentSignal = signal;
-        const oppositeSignal = currentSignal.oppositeSignal;
+        const oppositeSignal = { '.': '-', '-': '.' }[currentSignal];
         this.#nextSignal = this.#isHolding[oppositeSignal] ? oppositeSignal : null;
 
         const signalDuration = this.#signalDuration[currentSignal];
@@ -53,7 +43,7 @@ export default class IambicKeyer {
             this.#isHolding[signal] = true;
             if (!this.#currentSignal) {
                 this.#process(signal);
-            } else if (!signal.equals(this.#currentSignal)) {
+            } else if (signal !== this.#currentSignal) {
                 this.#nextSignal = signal;
             }
         });
