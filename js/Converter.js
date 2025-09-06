@@ -17,7 +17,7 @@ export default class Converter {
     }
     static morseCodeToText(morseCode) {
         return morseCode.split(this.#WORD_SEPARATOR).map(mcWord => mcWord.split(this.#CHARACTER_SEPARATOR).map(mcCharacter =>
-            this.#morseCodeToCharacter.number[mcCharacter] ?? this.#morseCodeToCharacter[this.#primaryLanguage][mcCharacter] ?? this.#morseCodeToCharacter[this.#secondaryLanguage][mcCharacter]
+            this.#morseCodeToCharacter.number[mcCharacter] ?? this.#morseCodeToCharacter[this.#primaryLanguage][mcCharacter] ?? this.#morseCodeToCharacter[this.#secondaryLanguage]?.[mcCharacter]
         ).join('')).join(' ');
     }
     static setDecodingMode(decodingMode) {
