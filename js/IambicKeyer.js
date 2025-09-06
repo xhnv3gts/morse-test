@@ -52,5 +52,11 @@ export default class IambicKeyer {
             const signal = this.#keyToSignal[e.key];
             this.#isHolding[signal] = false;
         });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.#isHolding['.'] = false;
+                this.#isHolding['-'] = false;
+            }
+        });
     }
 }
