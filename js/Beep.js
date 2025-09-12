@@ -5,8 +5,8 @@ export default class Beep {
     static get COMPLETED() { return this.#COMPLETED; }
     static get STOPPED() { return this.#STOPPED; }
     static get INTERRUPTED() { return this.#INTERRUPTED; }
-    static #playResult;
     static #isPlaying = false;
+    static #playResult;
     static #closeAudioCtxTimeoutId;
     static #CLOSE_AUDIO_CTX_TIMEOUT = 5000;
     static #audioCtx;
@@ -19,16 +19,16 @@ export default class Beep {
     static #VOLUME_SCALE_FACTOR = 0.0006;
     static play(duration) {
         if (this.#isPlaying) { return Promise.resolve(); }
-        this.#playResult = null;
         this.#isPlaying = true;
+        this.#playResult = null;
         clearTimeout(this.#closeAudioCtxTimeoutId);
 
         if (!this.#audioCtx) { this.#initializeAudioCtx(); }
         return new Promise(resolve => {
             const oscillatorNode = this.#oscillatorNode = new OscillatorNode(this.#audioCtx, { type: this.#waveform, frequency: this.#frequency });
             oscillatorNode.onended = () => {
-                this.#playResult ??= this.#COMPLETED;
                 this.#isPlaying = false;
+                this.#playResult ??= this.#COMPLETED;
                 this.#closeAudioCtxTimeoutId = setTimeout(async () => {
                     await this.#audioCtx.close();
                     this.#audioCtx = null;
