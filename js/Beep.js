@@ -17,6 +17,9 @@ export default class Beep {
     static #gain = 0;
     static #volume = 0;
     static #VOLUME_SCALE_FACTOR = 0.0006;
+    static get waveform() { return this.#waveform; }
+    static get frequency() { return this.#frequency; }
+    static get volume() { return this.#volume; }
     static play(duration) {
         if (this.#isPlaying) { return Promise.resolve(); }
         this.#isPlaying = true;
@@ -57,9 +60,6 @@ export default class Beep {
         this.#volume = (!Number.isInteger(volume) || volume <= 0) ? 0 : (volume >= 100) ? 100 : volume;
         this.#gain = this.#volume * this.#VOLUME_SCALE_FACTOR;
         if (this.#gainNode) { this.#gainNode.gain.value = this.#gain; }
-    }
-    static getSettings() {
-        return { waveform: this.#waveform, frequency: this.#frequency, volume: this.#volume };
     }
     static #initializeAudioCtx() {
         this.#audioCtx = new AudioContext();
