@@ -1,0 +1,23 @@
+{
+    "common": {
+        "Beep": {
+            "volume": 50
+        }
+    },
+    "receiving-practice.html": {
+        "dotDuration": 50,
+        "maxWords": 1,
+        "shortcutKeys": [
+            {
+                "modifierKey": "ctrlKey",
+                "key": "ArrowUp",
+                "keyText": "↑",
+                "buttonId": "practice-receiving"
+            },
+            {
+                "key": "e",
+                "buttonId": "practice-receiving"
+            }
+        ]
+    }
+}
