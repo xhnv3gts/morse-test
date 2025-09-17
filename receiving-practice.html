@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>受信練習</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgo="> <!--faviconエラー回避用-->
+    <style>
+        html { font-size: 24px; line-height: 1.5; font-family: Arial; }
+        input,select,button { font-size: 1em; font-family: inherit; }
+        body { width: 95%; max-width: 1200px; margin: auto; background-color: rgb(31 31 31); color: rgb(232 232 232); }
+        header { display: flex; justify-content: flex-end; column-gap: 15px; margin-block: 10px; padding: 5px; background-color: rgb(77 81 86); font-size: 0.9rem; }
+        main { margin-inline: 1rem; }
+        .big-button { width: 250px; height: 100px; }
+        #practice-receiving { margin-bottom: 5px; }
+        #show-answer { margin-bottom: 5px; }
+        #answer { font-size: 40px; }
+        #canvas-wrapper { width: 100%; height: 1000px; margin-top: 10px; background-color: white; }
+        #canvas { width: 100%; height: 100%; touch-action: none; }
+        #div1 { text-align: right; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>音量：<input type="range" id="volume"></div>
+    </header>
+    <main>
+        <button id="practice-receiving" class="big-button">受信練習</button> <button id="listen-again" class="big-button">もう一度聞く</button><br>
+        <button id="show-answer" class="big-button">解答表示</button> <span id="answer"></span><br>
+        <button id="clear-canvas" class="big-button">キャンバスクリア</button>
+        <div id="canvas-wrapper"><canvas id="canvas"></canvas></div>
+    </main>
+    <script src="./receiving-practice.js" type="module"></script>
+</body>
+</html>
