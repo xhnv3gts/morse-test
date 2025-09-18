@@ -11,31 +11,25 @@ export async function getData(url) {
 }
 export async function getSettings(path) {
     const settings = await getData(path);
-    const commonSettings = settings.common;
+    if (settings === null) { return null; }
+    if (!isObject(settings)) { return settings; }
+
+    const commonSettings = settings.common ?? {};
     const filename = window.location.pathname.split('/').at(-1) || 'index.html';
-    const localSettings = settings[filename];
-    return deepMerge(commonSettings, localSettings);
-}
-function deepMerge(target, source) {
-    if (source === undefined) {
-        return target;
-    }
+    const localSettings = settings[filename] ?? {};
+    return merge(commonSettings, localSettings);
 
-    if (typeof source === 'object' && source !== null && !Array.isArray(source)) {
-        if (typeof target !== 'object' || target === null || Array.isArray(target)) {
-            target = {};
+    function merge(target, source) {
+        if (isObject(source)) {
+            if (!isObject(target)) { target = {}; }
+            Object.keys(source).forEach(key => target[key] = merge(target[key], source[key]));
+            return target;
         }
-        for (const key of Object.keys(source)) {
-            target[key] = deepMerge(target[key], source[key]);
-        }
-        return target;
+        return source;
     }
-
-    if (Array.isArray(source)) {
-        return [...source];
+    function isObject(value) {
+        return typeof value === 'object' && value !== null && !Array.isArray(value);
     }
-
-    return source;
 }
 
 export function getRandomItem(array) {
