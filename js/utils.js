@@ -11,13 +11,14 @@ export async function getData(url) {
 }
 export async function getSettings(path) {
     const settings = await getData(path);
-    if (settings === null) { return null; }
-    if (!isObject(settings)) { return settings; }
+    if (!isObject(settings)) { return null; }
 
-    const commonSettings = settings.common ?? {};
+    const commonSettings = isObject(settings.common) ? settings.common : null;
     const filename = window.location.pathname.split('/').at(-1) || 'index.html';
-    const localSettings = settings[filename] ?? {};
-    return merge(commonSettings, localSettings);
+    const localSettings = isObject(settings[filename]) ? settings[filename] : null;
+    if (!commonSettings && !localSettings) { return null; }
+
+    return merge(commonSettings ?? {}, localSettings ?? {});
 
     function merge(target, source) {
         if (isObject(source)) {
