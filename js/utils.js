@@ -12,12 +12,10 @@ export async function getData(url) {
 export async function getSettings(path) {
     const settings = await getData(path);
     if (!isObject(settings)) { return null; }
-
     const commonSettings = isObject(settings.common) ? settings.common : null;
     const filename = window.location.pathname.split('/').at(-1) || 'index.html';
     const localSettings = isObject(settings[filename]) ? settings[filename] : null;
     if (!commonSettings && !localSettings) { return null; }
-
     return merge(commonSettings ?? {}, localSettings ?? {});
 
     function merge(target, source) {
