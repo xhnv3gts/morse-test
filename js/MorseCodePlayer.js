@@ -1,20 +1,16 @@
 import Beep from './Beep.js';
-import Converter from './Converter.js';
-import MorseCode from './MorseCode.js';
+import MorseCodeConverter from './MorseCodeConverter.js'
 
 export default class MorseCodePlayer {
     static #isPlaying = false;
     static #processTimeoutId;
     static stop() {
-        if (this.#isPlaying) {
-            MorseCodePlayer.#isBeepCanceled = true;
-            Beep.stop();
-            clearTimeout(this.#processTimeoutId);
-            this.#isPlaying = false;
-        }
+        if (!this.#isPlaying) { return; }
+        this.#isPlaying = false;
+        Beep.stop();
+        clearTimeout(this.#processTimeoutId);
     }
 
-    static #isBeepCanceled = false;
     #signalDuration;
     #signalSpace;
     #letterSpace;
@@ -27,18 +23,20 @@ export default class MorseCodePlayer {
         this.#setDurationAndSpace(dotDuration);
     }
     #hasText = false;
-    set(text) {
+    setText(text) {
+        if (MorseCodePlayer.#isPlaying) { return; }
         this.#hasText = true;
-        const morseCode = MorseCode.fromText(text);
-        this.#signals = morseCode.toSignals();
-        // this.#signals = textToSignals(text);
+        const morseCode = MorseCodeConverter.textToMorseCode(text);
+        if (!morseCode) { return false; }
+        this.#signals = MorseCodeConverter.structureMorseCode(morseCode);
         this.#resetIndex();
+        return true;
     }
     get hasText() { return this.#hasText; }
     play() {
-        this.#resetIndex();
+        if (MorseCodePlayer.#isPlaying) { return; }
         MorseCodePlayer.#isPlaying = true;
-        MorseCodePlayer.#isBeepCanceled = false;
+        this.#resetIndex();
         this.#process();
     }
     #resetIndex() {
@@ -47,12 +45,10 @@ export default class MorseCodePlayer {
     async #process() {
         const signal = this.#signals[this.#wordIndex][this.#letterIndex][this.#signalIndex];
         if (signal) {
-        const signalDuration = this.#signalDuration[signal];
-        await Beep.play(signalDuration);
-        if (MorseCodePlayer.#isBeepCanceled) {
-            return;
+            const signalDuration = this.#signalDuration[signal];
+            const result = await Beep.play(signalDuration);
+            if (result !== Beep.COMPLETED) { return; }
         }
-    }
 
         const space = (() => {
             this.#signalIndex++;
