@@ -3,18 +3,28 @@ import Beep from './Beep.js';
 export default class IambicKeyer {
     static onsignalstart;
     static onsignalend;
+    static onlettercommit;
+    static onwordcommit;
     static #keyToSignal = {};
     static #signalDuration;
     static #signalSpace;
+    static #letterSpace;
+    static #wordSpace;
     static #currentSignal;
     static #nextSignal;
     static #isHolding = {};
+    static #timeoutId1;
+    static #timeoutId2;
     static initialize(dotKey, dashKey, dotDuration) {
         this.#keyToSignal = { [dotKey]: '.', [dashKey]: '-' };
         this.#signalDuration = { '.': dotDuration, '-': dotDuration * 3 };
         this.#signalSpace = dotDuration;
+        this.#letterSpace = dotDuration * 3;
+        this.#wordSpace = dotDuration * 7;
     }
     static async #process(signal) {
+        clearTimeout(this.#timeoutId1);
+        clearTimeout(this.#timeoutId2);
         this.onsignalstart?.(signal);
 
         const currentSignal = this.#currentSignal = signal;
@@ -34,6 +44,9 @@ export default class IambicKeyer {
                 this.#currentSignal = null;
             }
         }, this.#signalSpace);
+        
+        this.#timeoutId1 = setTimeout(() => this.onlettercommit?.(), this.#letterSpace);
+        this.#timeoutId2 = setTimeout(() => this.onwordcommit?.(), this.#wordSpace);
     }
     static {
         const isRegisteredKey = key => Object.hasOwn(this.#keyToSignal, key);
