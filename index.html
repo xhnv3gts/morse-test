@@ -5,36 +5,23 @@
     <title>モールス練習</title>
     <link rel="icon" href="data:image/png;base64,iVBORw0KGgo="> <!--faviconエラー回避用-->
     <style>
-        html { font: 20px/1.5 "Microsoft JhengHei"; }
+        html { font-size: 20px; line-height: 1.5; }
         input,select,button { font-size: 1em; font-family: inherit; }
         body { width: 95%; max-width: 1200px; margin: auto; background-color: rgb(31 31 31); color: rgb(232 232 232); }
         header { display: flex; justify-content: flex-end; column-gap: 15px; margin-block: 10px; padding: 5px; background-color: rgb(77 81 86); font-size: 0.9rem; }
         main { margin-inline: 1rem; }
-        .big-button { width: 250px; height: 100px; }
-        #example-text { width: 30em; }
-        #output { margin-block: 10px; font-size: 1.5em; }
-        #practice-reception { margin-bottom: 5px; }
-        #show-answer { margin-bottom: 5px; }
-        #canvas-wrapper { width: 100%; height: 1000px; margin-top: 10px; background-color: white; }
-        #canvas { width: 100%; height: 100%; touch-action: none; }
+        a { color: #99c3ff; }
+        a:visited { color: #c58af9; }
     </style>
 </head>
 <body>
-    <header>
-        <div>変換モード：<select id="convert-mode"></select></div>
-        <div>音量：<input id="volume" type="range"></div>
-    </header>
+    <!-- <header>
+        <div>音量：<input id="volume" type="range" value="40"></div>
+    </header> -->
     <main>
-        お手本を聴く：<input id="example-text"> <button id="play-example">再生</button>
-        <div id="output"></div>
-        <button id="clear-output">クリア [Delete]</button>
-        <hr>
-        <button id="practice-reception" class="big-button">受信練習 [↓]</button> <button id="listen-again" class="big-button">もう一度聞く [→]</button><br>
-        <button id="show-answer" class="big-button">単語表示 [V]</button> <span id="answer"></span><br>
-        <button id="clear-canvas" class="big-button">キャンバスクリア</button>
-        <div id="log"></div>
-        <div id="canvas-wrapper"><canvas id="canvas"></canvas></div>
+        <h2><a href="./receiving-practice.html">受信練習</a></h2>
+        <h2><a href="./sending-practice.html">送信練習</a></h2>
     </main>
-    <script src="./index.js" type="module"></script>
+    <!-- <script src="./index.js" type="module"></script> -->
 </body>
 </html>
