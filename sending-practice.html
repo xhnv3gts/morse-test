@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>送信練習</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgo="> <!--faviconエラー回避用-->
+    <style>
+        html { font-size: 20px; line-height: 1.5; }
+        input,select,button { font-size: 1em; font-family: inherit; }
+        body { width: 95%; max-width: 1200px; margin: auto; background-color: rgb(31 31 31); color: rgb(232 232 232); }
+        header { display: flex; justify-content: flex-end; column-gap: 15px; margin-block: 10px; padding: 5px; background-color: rgb(77 81 86); font-size: 0.9rem; }
+        main { margin-inline: 1rem; }
+        .big-button { width: 250px; height: 100px; }
+        #output { margin-block: 10px; font-size: 1.5em; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>復号モード：<select id="decoding-mode"></select></div>
+        <div>音量：<input type="range" id="volume"></div>
+    </header>
+    <main>
+        <div id="output"></div>
+        <button id="clear-output">クリア [Delete]</button>
+    </main>
+    <script src="./sending-practice.js" type="module"></script>
+</body>
+</html>
