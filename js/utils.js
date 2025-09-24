@@ -46,16 +46,19 @@ export function getRandomSubarray(array, range) {
     return array.slice(start, end);
 }
 
-export function registerShortcutKey({ modifierKey, key, keyText, buttonId }) {
+export function registerShortcutKey({ modifierKey, modifierKeyText, key, keyText, buttonId }) {
+    modifierKeyText ??= modifierKey ? `${modifierKey.charAt(0).toUpperCase()}${modifierKey.slice(1, -3)} + ` : '';
+    keyText ??= capitalizeFirstLetter(key);
     const button = document.getElementById(buttonId);
-    const modifierKeyText = { 'ctrlKey': 'Ctrl' }[modifierKey];
-    keyText ??= key.toUpperCase();
-    button.textContent += `[${modifierKeyText ? `${modifierKeyText} + ` : ''}${keyText}]`;
+    button.textContent += ` [${modifierKeyText}${keyText}]`;
     const isModifierKeyDown = modifierKey ? e => e[modifierKey] : () => true;
     window.addEventListener('keydown', e => {
         if (e.repeat || !isModifierKeyDown(e) || e.key !== key) { return; }
         e.preventDefault();
         button.dispatchEvent(new Event('click'));
-        console.log('a');
     });
+
+    function capitalizeFirstLetter(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
 }
