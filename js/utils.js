@@ -9,8 +9,8 @@ export async function getData(url) {
         return null;
     }
 }
-export async function getSettings(path) {
-    const settings = await getData(path);
+export async function getSettings() {
+    const settings = await getData(new URL('../data/settings.json', import.meta.url));
     if (!isObject(settings)) { return null; }
     const commonSettings = isObject(settings.common) ? settings.common : null;
     const filename = window.location.pathname.split('/').at(-1) || 'index.html';
