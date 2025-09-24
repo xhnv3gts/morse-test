@@ -1,58 +1,9 @@
 import Beep from './js/Beep.js';
 import BibleData from './js/BibleData.js';
 import MorseCodePlayer from './js/MorseCodePlayer.js';
-import MorseCode from './js/MorseCode.js';
-import { getSettings, registerShortcutKey } from './js/utils.js';
+import { getSettings, registerShortcutKey, getRandomSubarray } from './js/utils.js';
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const settings2 = {
-    'common': {
-        'Beep': {
-            'volume': 50
-        }
-    },
-    'receividng-practice.html': {
-        'Beep': {
-            'volume': 30
-        },
-        'dotDuration': 50
-    }
-};
-const commonSettings = settings2.common;
-const localSettings = settings2[window.location.pathname.split('/').at(-1) || 'index.html'];
-const me2 = deepMerge(commonSettings, localSettings);
-console.log(me2);
-
-function deepMerge(target, source) {
-    if (source === undefined) {
-        return target;
-    }
-
-    // source がオブジェクトなら再帰的に処理
-    if (typeof source === 'object' && source !== null && !Array.isArray(source)) {
-        if (typeof target !== 'object' || target === null || Array.isArray(target)) {
-            target = {};
-        }
-        for (const key of Object.keys(source)) {
-            target[key] = deepMerge(target[key], source[key]);
-        }
-        return target;
-    }
-
-    // source が配列なら上書き（JSON なので配列のマージ規則は通常「置き換え」）
-    if (Array.isArray(source)) {
-        return [...source];
-    }
-
-    // プリミティブ値ならそのまま上書き
-    return source;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-const settings = await getSettings('./data/settings.json');
+const settings = await getSettings();
 
 if (settings.Beep?.waveform !== undefined) { Beep.setWaveform(settings.Beep.waveform); }
 if (settings.Beep?.frequency !== undefined) { Beep.setFrequency(settings.Beep.frequency); }
@@ -74,22 +25,84 @@ document.addEventListener('visibilitychange', () => {
 });
 document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
 
-BibleData.setDirectoryPath('./data/kjv/');
+
+const bookNameSelect = document.getElementById('book-name');
+const bookNames = await BibleData.getBookNames();
+bookNameSelect.append(new Option('(指定しない)', ''));
+bookNames.forEach(bookName => {
+    const option = new Option(bookName);
+    bookNameSelect.append(option);
+});
+
+await updataChapterNoSelect(document.getElementById('book-name').value);
+
+async function updataChapterNoSelect(bookName) {
+    const chapterNoSelect = document.getElementById('chapter-no');
+    chapterNoSelect.innerHTML = '';
+    chapterNoSelect.append(new Option('(指定しない)', ''));
+
+    // const bookName = document.getElementById('book-name').value;
+    if (bookName) {
+        chapterNoSelect.disabled = false;
+        const chapterCount = await BibleData.getChapterCount(bookName);
+        for (let i = 1; i <= chapterCount; i++) {
+            chapterNoSelect.append(new Option(i));
+        }
+    } else {
+        chapterNoSelect.disabled = true;   
+    }
+
+    updataVerseNoSelect(bookName, Number(chapterNoSelect.value));
+}
+async function updataVerseNoSelect(bookName, chapterNo) {
+    const verseNoSelect = document.getElementById('verse-no');
+    verseNoSelect.innerHTML = '';
+    verseNoSelect.append(new Option('(指定しない)', ''));
+
+    // const bookName = document.getElementById('book-name').value;
+    if (chapterNo) {
+        verseNoSelect.disabled = false;
+        const verseCount = await BibleData.getVerseCount(bookName, chapterNo);
+        for (let i = 1; i <= verseCount; i++) {
+            verseNoSelect.append(new Option(i));
+        }
+    } else {
+        verseNoSelect.disabled = true;   
+    }
+}
+
+
+bookNameSelect.addEventListener('change', e => {
+    console.log(e.target.value);
+    updataChapterNoSelect(e.target.value);
+});
+document.getElementById('chapter-no').addEventListener('change', e => {
+    console.log(e.target.value);
+
+    updataVerseNoSelect(bookNameSelect.value, e.target.value);
+});
+
+
 const player = new MorseCodePlayer(settings.dotDuration);
 const useSymbol = false; //記号を含めるか
-const wordNum = 1; //単語数(１のときは重複を除外した配列を使う)
-const maxWords = 1;
+const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+const maxWords = 2;
 
 const answerDisplay = document.getElementById('answer');
 document.getElementById('practice-receiving').addEventListener('click', async () => {
     answerDisplay.style.visibility = 'hidden';
     if (wordNum === 1) {
         const word = await BibleData.getRandomWord();
-        player.set(word);
+        player.setText(word);
         answerDisplay.textContent = word;
     } else {
-        const { text, reference } = await BibleData.getText(wordNum);
-        player.set(text);
+        const bookName = bookNameSelect.value || null;
+        const chapterNo = Number(document.getElementById('chapter-no').value) || null;
+        const verseNo = Number(document.getElementById('verse-no').value) || null;
+        const { verse, reference } = await BibleData.getVerse(bookName, chapterNo, verseNo);
+        const words = verse.split(' ');
+        const text = getRandomSubarray(words, maxWords).join(' ');
+        player.setText(text);
         const referenceText = `${reference.bookName} ${reference.chapterNo}:${reference.verseNo}`;
         answerDisplay.textContent = `${text} (${referenceText})`;
     }
