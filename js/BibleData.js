@@ -1,29 +1,16 @@
-import { getData, getRandomItem, getRandomIndex, getRandomSubarray } from './utils.js';
+import { getData, getRandomItem, getRandomIndex } from './utils.js';
 
 export default class BibleData {
-    static #directoryPath;
-    static setDirectoryPath(directoryPath) {
-        if (!directoryPath.endsWith('/')) { directoryPath += '/'; }
-        this.#directoryPath = directoryPath;
-    }
-    static #words;
+    static #directoryPath = new URL(`../data/kjv/`, import.meta.url);
     static async getRandomWord() {
-        this.#words ??= await getData(`${this.#directoryPath}words.json`);
-        return getRandomItem(this.#words);
+        const words = await this.#getData('./words.json');
+        return getRandomItem(words);
     }
-    static #bookNames;
-    static #bookCache = {};
     static async getBook(bookName) {
-        this.#bookNames ??= await getData(`${this.#directoryPath}book-names.json`);
-        bookName ??= getRandomItem(this.#bookNames);
-        let bookAsChapters;
-        if (Object.hasOwn(this.#bookCache, bookName)) {
-            bookAsChapters = this.#bookCache[bookName];
-        } else {
-            const serialNo = this.#bookNames.indexOf(bookName) + 1;
-            const fileName = `${String(serialNo).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
-            bookAsChapters = this.#bookCache[bookName] = await getData(`${this.#directoryPath}${fileName}`);
-        }
+        const bookNames = await this.getBookNames();
+        bookName ??= getRandomItem(bookNames);
+        const filePath = `./${String(bookNames.indexOf(bookName) + 1).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
+        const bookAsChapters = await this.#getData(filePath);
         const reference = { bookName };
         return { bookAsChapters, reference };
     }
@@ -41,10 +28,20 @@ export default class BibleData {
         reference.verseNo = verseNo;
         return { verse, reference };
     }
-    static async getText(maxWords, bookName, chapterNo, verseNo) {
-        const { verse, reference } = await this.getVerse(bookName, chapterNo, verseNo);
-        const words = verse.split(' ');
-        const text = getRandomSubarray(words, maxWords).join(' ');
-        return { text, reference };
+    static async getBookNames() {
+        const bookNames = await this.#getData('./book-names.json');
+        return bookNames;
+    }
+    static async getChapterCount(bookName) {
+        const { bookAsChapters } = await this.getBook(bookName);
+        return bookAsChapters.length;
+    }
+    static async getVerseCount(bookName, chapterNo) {
+        const { chapterAsVerses } = await this.getChapter(bookName, chapterNo);
+        return chapterAsVerses.length;
+    }
+    static async #getData(filePath) {
+        const data = await getData(new URL(filePath, this.#directoryPath));
+        return data;
     }
 }
