@@ -46,14 +46,20 @@ export function getRandomSubarray(array, range) {
     return array.slice(start, end);
 }
 
-export function registerShortcutKey({ modifierKey, modifierKeyText, key, keyText, buttonId }) {
-    modifierKeyText ??= modifierKey ? `${modifierKey.charAt(0).toUpperCase()}${modifierKey.slice(1, -3)} + ` : '';
-    keyText ??= capitalizeFirstLetter(key);
+export function registerShortcutKey({ modifierKeys, key, buttonId }) {
+    modifierKeys = modifierKeys?.map(modifierKey => modifierKey.endsWith('Key') ? modifierKey : { 'Control': 'ctrlKey' }[modifierKey] ?? `${modifierKey.toLowerCase()}Key`) ?? [];
+    const allModifierKeySet = new Set(['ctrlKey', 'shiftKey', 'altKey', 'metaKey']);
+    const modifierKeySet = new Set(modifierKeys);
+    const disallowedModifierKeys = [...allModifierKeySet.difference(modifierKeySet)];
+    key = key.toLowerCase();
+    const modifierKeyLabels = modifierKeys.map(modifierKey => capitalizeFirstLetter(modifierKey.replace('Key', '')));
+    const keyLabelMap = { ' ': 'Space', 'arrowup': '↑', 'arrowright': '→', 'arrowdown': '↓', 'arrowleft': '←' }; //適宜追加
+    const keyLabel = keyLabelMap[key] ?? capitalizeFirstLetter(key);
+    const shortcutKeyLabel = [...modifierKeyLabels, keyLabel].join('+');
     const button = document.getElementById(buttonId);
-    button.textContent += ` [${modifierKeyText}${keyText}]`;
-    const isModifierKeyDown = modifierKey ? e => e[modifierKey] : () => true;
+    button.textContent += ` [${shortcutKeyLabel}]`;
     window.addEventListener('keydown', e => {
-        if (e.repeat || !isModifierKeyDown(e) || e.key !== key) { return; }
+        if (e.repeat || modifierKeys.some(modifierKey => !e[modifierKey]) || disallowedModifierKeys.some(modifierKey => e[modifierKey]) || e.key.toLowerCase() !== key) { return; }
         e.preventDefault();
         button.dispatchEvent(new Event('click'));
     });
