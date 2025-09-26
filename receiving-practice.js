@@ -3,118 +3,92 @@ import BibleData from './js/BibleData.js';
 import MorseCodePlayer from './js/MorseCodePlayer.js';
 import { getSettings, registerShortcutKey, getRandomSubarray } from './js/utils.js';
 
+
 const settings = await getSettings();
 
-if (settings.Beep?.waveform !== undefined) { Beep.setWaveform(settings.Beep.waveform); }
-if (settings.Beep?.frequency !== undefined) { Beep.setFrequency(settings.Beep.frequency); }
-if (settings.Beep?.volume !== undefined) { Beep.setVolume(settings.Beep.volume); }
-document.getElementById('volume').value = Beep.volume;
-
-// settings.shortcutKeys?.forEach(({ modifierKey, key, buttonId }) => {
-
-// })();
-settings.shortcutKeys?.forEach(registerShortcutKey);
-// registerShortcutKey({ modifierKey: 'ctrlKey', key: 'ArrowUp', keyText: '↑', buttonId: 'practice-receiving' });
-// registerShortcutKey({ modifierKey: 'ctrlKey', key: 'ArrowUp', keyText: '↑', buttonId: 'practice-receiving' });
-// registerShortcutKey({ modifierKey: 'ctrlKey', key: 'ArrowUp', keyText: '↑', buttonId: 'practice-receiving' });
-
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        MorseCodePlayer.stop();
-    }
-});
-document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
-
-
-const bookNameSelect = document.getElementById('book-name');
-const bookNames = await BibleData.getBookNames();
-bookNameSelect.append(new Option('(指定しない)', ''));
-bookNames.forEach(bookName => {
-    const option = new Option(bookName);
-    bookNameSelect.append(option);
+    if (document.hidden) { MorseCodePlayer.stop(); }
 });
 
-await updataChapterNoSelect(document.getElementById('book-name').value);
-
-async function updataChapterNoSelect(bookName) {
-    const chapterNoSelect = document.getElementById('chapter-no');
-    chapterNoSelect.innerHTML = '';
-    chapterNoSelect.append(new Option('(指定しない)', ''));
-
-    // const bookName = document.getElementById('book-name').value;
-    if (bookName) {
-        chapterNoSelect.disabled = false;
-        const chapterCount = await BibleData.getChapterCount(bookName);
-        for (let i = 1; i <= chapterCount; i++) {
-            chapterNoSelect.append(new Option(i));
+{
+    if (settings.Beep?.waveform !== undefined) { Beep.setWaveform(settings.Beep.waveform); }
+    if (settings.Beep?.frequency !== undefined) { Beep.setFrequency(settings.Beep.frequency); }
+    if (settings.Beep?.volume !== undefined) { Beep.setVolume(settings.Beep.volume); }
+    document.getElementById('volume').addEventListener('input', e => Beep.setVolume(e.target.valueAsNumber));
+    document.getElementById('volume').value = Beep.volume;
+} {
+    document.getElementById('book-name').addEventListener('change', async e => {
+        const select = document.getElementById('chapter-no');
+        initializeSelect(select);
+        const bookName = e.target.value;
+        if (bookName) {
+            const chapterCount = await BibleData.getChapterCount(bookName);
+            select.append(...Array.from({ length: chapterCount }, (_, i) => new Option(i + 1)));
+            select.disabled = false;
+        } else {
+            select.disabled = true;
         }
-    } else {
-        chapterNoSelect.disabled = true;   
-    }
-
-    updataVerseNoSelect(bookName, Number(chapterNoSelect.value));
-}
-async function updataVerseNoSelect(bookName, chapterNo) {
-    const verseNoSelect = document.getElementById('verse-no');
-    verseNoSelect.innerHTML = '';
-    verseNoSelect.append(new Option('(指定しない)', ''));
-
-    // const bookName = document.getElementById('book-name').value;
-    if (chapterNo) {
-        verseNoSelect.disabled = false;
-        const verseCount = await BibleData.getVerseCount(bookName, chapterNo);
-        for (let i = 1; i <= verseCount; i++) {
-            verseNoSelect.append(new Option(i));
+        select.dispatchEvent(new Event('change'));
+    });
+    document.getElementById('chapter-no').addEventListener('change', async e => {
+        const select = document.getElementById('verse-no');
+        initializeSelect(select);
+        const chapterNo = Number(e.target.value);
+        if (chapterNo) {
+            const bookName = document.getElementById('book-name').value;
+            const verseCount = await BibleData.getVerseCount(bookName, chapterNo);
+            select.append(...Array.from({ length: verseCount }, (_, i) => new Option(i + 1)));
+            select.disabled = false;
+        } else {
+            select.disabled = true;
         }
-    } else {
-        verseNoSelect.disabled = true;   
+    });
+
+    const bookNames = await BibleData.getBookNames();
+    document.getElementById('book-name').append(createNoSelectionOption(), ...bookNames.map(bookName => new Option(bookName)));
+    document.getElementById('book-name').dispatchEvent(new Event('change'));
+
+    function initializeSelect(select) {
+        while (select.lastChild) { select.removeChild(select.lastChild); }
+        select.append(createNoSelectionOption());
     }
+    function createNoSelectionOption() {
+        return new Option('(指定しない)', '');
+    }
+} {
+    const player = new MorseCodePlayer(settings.dotDuration);
+    const useSymbol = false; //記号を含めるか
+    const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
+    const maxWords = 2;
+
+    const answerDisplay = document.getElementById('answer');
+    document.getElementById('practice-receiving').addEventListener('click', async () => {
+        answerDisplay.style.visibility = 'hidden';
+        if (wordNum === 1) {
+            const word = await BibleData.getRandomWord();
+            player.setText(word);
+            answerDisplay.textContent = word;
+        } else {
+            const bookName = document.getElementById('book-name').value || null;
+            const chapterNo = Number(document.getElementById('chapter-no').value) || null;
+            const verseNo = Number(document.getElementById('verse-no').value) || null;
+            const { verse, reference } = await BibleData.getVerse(bookName, chapterNo, verseNo);
+            const words = verse.split(' ');
+            const text = getRandomSubarray(words, maxWords).join(' ');
+            player.setText(text);
+            const referenceText = `${reference.bookName} ${reference.chapterNo}:${reference.verseNo}`;
+            answerDisplay.textContent = `${text} (${referenceText})`;
+        }
+        player.play();
+    });
+    document.getElementById('listen-again').addEventListener('click', () => {
+        if (!player.hasText) { return; }
+        player.play();
+    });
+    document.getElementById('show-answer').addEventListener('click', () => {
+        answerDisplay.style.visibility = 'visible';
+    });
 }
-
-
-bookNameSelect.addEventListener('change', e => {
-    console.log(e.target.value);
-    updataChapterNoSelect(e.target.value);
-});
-document.getElementById('chapter-no').addEventListener('change', e => {
-    console.log(e.target.value);
-
-    updataVerseNoSelect(bookNameSelect.value, e.target.value);
-});
-
-
-const player = new MorseCodePlayer(settings.dotDuration);
-const useSymbol = false; //記号を含めるか
-const wordNum = 2; //単語数(１のときは重複を除外した配列を使う)
-const maxWords = 2;
-
-const answerDisplay = document.getElementById('answer');
-document.getElementById('practice-receiving').addEventListener('click', async () => {
-    answerDisplay.style.visibility = 'hidden';
-    if (wordNum === 1) {
-        const word = await BibleData.getRandomWord();
-        player.setText(word);
-        answerDisplay.textContent = word;
-    } else {
-        const bookName = bookNameSelect.value || null;
-        const chapterNo = Number(document.getElementById('chapter-no').value) || null;
-        const verseNo = Number(document.getElementById('verse-no').value) || null;
-        const { verse, reference } = await BibleData.getVerse(bookName, chapterNo, verseNo);
-        const words = verse.split(' ');
-        const text = getRandomSubarray(words, maxWords).join(' ');
-        player.setText(text);
-        const referenceText = `${reference.bookName} ${reference.chapterNo}:${reference.verseNo}`;
-        answerDisplay.textContent = `${text} (${referenceText})`;
-    }
-    player.play();
-});
-document.getElementById('listen-again').addEventListener('click', () => {
-    if (!player.hasText) { return; }
-    player.play();
-});
-document.getElementById('show-answer').addEventListener('click', () => {
-    answerDisplay.style.visibility = 'visible';
-});
 
 
 //キャンバス
@@ -176,3 +150,7 @@ document.getElementById('clear-canvas').addEventListener('click', () => {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 });
+
+
+
+settings.shortcutKeys?.forEach(registerShortcutKey);
