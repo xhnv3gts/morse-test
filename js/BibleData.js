@@ -1,13 +1,18 @@
 import { getData, getRandomItem, getRandomIndex } from './utils.js';
 
 export default class BibleData {
-    static #directoryPath = new URL(`../data/kjv/`, import.meta.url);
+    static #directoryPath;
+    static #metadata;
+    static async initialize() {
+        this.#directoryPath = new URL('../data/kjv/', import.meta.url);
+        this.#metadata = await this.#getData('./metadata.json');
+    }
     static async getRandomWord() {
         const words = await this.#getData('./words.json');
         return getRandomItem(words);
     }
     static async getBook(bookName) {
-        const bookNames = await this.getBookNames();
+        const bookNames = this.#metadata.bookNames;
         bookName ??= getRandomItem(bookNames);
         const filePath = `./${String(bookNames.indexOf(bookName) + 1).padStart(2, '0')}_${bookName.replaceAll(' ', '-')}.json`;
         const bookAsChapters = await this.#getData(filePath);
@@ -28,17 +33,14 @@ export default class BibleData {
         reference.verseNo = verseNo;
         return { verse, reference };
     }
-    static async getBookNames() {
-        const bookNames = await this.#getData('./book-names.json');
-        return bookNames;
+    static getBookNames() {
+        return this.#metadata.bookNames;
     }
-    static async getChapterCount(bookName) {
-        const { bookAsChapters } = await this.getBook(bookName);
-        return bookAsChapters.length;
+    static getChapterCount(bookName) {
+        return this.#metadata[bookName].chapterCount;
     }
-    static async getVerseCount(bookName, chapterNo) {
-        const { chapterAsVerses } = await this.getChapter(bookName, chapterNo);
-        return chapterAsVerses.length;
+    static getVerseCount(bookName, chapterNo) {
+        return this.#metadata[bookName][chapterNo].verseCount;
     }
     static async #getData(filePath) {
         const data = await getData(new URL(filePath, this.#directoryPath));
