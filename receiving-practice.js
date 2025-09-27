@@ -6,6 +6,8 @@ import { getSettings, registerShortcutKey, getRandomSubarray } from './js/utils.
 
 const settings = await getSettings();
 
+await BibleData.initialize();
+
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) { MorseCodePlayer.stop(); }
 });
@@ -22,7 +24,7 @@ document.addEventListener('visibilitychange', () => {
         initializeSelect(select);
         const bookName = e.target.value;
         if (bookName) {
-            const chapterCount = await BibleData.getChapterCount(bookName);
+            const chapterCount = BibleData.getChapterCount(bookName);
             select.append(...Array.from({ length: chapterCount }, (_, i) => new Option(i + 1)));
             select.disabled = false;
         } else {
@@ -36,7 +38,7 @@ document.addEventListener('visibilitychange', () => {
         const chapterNo = Number(e.target.value);
         if (chapterNo) {
             const bookName = document.getElementById('book-name').value;
-            const verseCount = await BibleData.getVerseCount(bookName, chapterNo);
+            const verseCount = BibleData.getVerseCount(bookName, chapterNo);
             select.append(...Array.from({ length: verseCount }, (_, i) => new Option(i + 1)));
             select.disabled = false;
         } else {
@@ -44,7 +46,7 @@ document.addEventListener('visibilitychange', () => {
         }
     });
 
-    const bookNames = await BibleData.getBookNames();
+    const bookNames = BibleData.getBookNames();
     document.getElementById('book-name').append(createNoSelectionOption(), ...bookNames.map(bookName => new Option(bookName)));
     document.getElementById('book-name').dispatchEvent(new Event('change'));
 
